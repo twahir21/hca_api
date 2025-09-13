@@ -245,4 +245,4 @@ user can say username = 1' OR 1=1; --` to attack === username = 1 OR 1=1
 
 ```sql
 const sql = `SELECT * FROM users WHERE username = '${userInput}'`;
-// If userInput is `' OR 1=1 --`, the query becomes a dangerous `SELECT * FROM users WHERE username = '' OR 1=1 --`
+// If userInput is `' OR 1=1 --`, the query becomes a dangerous `SELECT * FROM users WHERE username = '' OR 1=1 --`# hca_api
