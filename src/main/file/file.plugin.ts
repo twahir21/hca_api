@@ -1,9 +1,10 @@
 import { Elysia } from 'elysia'
 import XLSX from 'xlsx'
+import { fileTypes } from './file.types';
 
 export const filePlugin = new Elysia()
   // Handle file upload and validation
-  .post('/file', async ({ body, set }) => {
+  .post('/file', async ({ body, set }): Promise<fileTypes> => {
     try {
       // In Elysia, when using multipart form data, the file is available directly on the body
       // The field name "file" comes from your frontend: formData.append("file", file)
@@ -11,13 +12,17 @@ export const filePlugin = new Elysia()
       
       if (!file) {
         set.status = 400;
-        return { error: 'No file provided' };
+        return { 
+          success: false,
+          message: 'No file provided',
+          details: "Make sure file is uploaded."
+        };
       }
 
       // Validate file type (only allow .xlsx)
       if (file.type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
         set.status = 400;
-        return { error: 'Only Excel files (.xlsx) are allowed' };
+        return { success: false, message: 'Incorrect file uploaded', details: "Only Excel files (.xlsx) are allowed" };
       }
 
       // Convert file to buffer and process (without saving to disk)
@@ -31,7 +36,7 @@ export const filePlugin = new Elysia()
       // Check if file has data
       if (json.length === 0) {
         set.status = 400;
-        return { error: "Excel file is empty" };
+        return { success: false, message: "Excel file is empty", details: "Make sure you have atleast one row" };
       }
 
       // Extract headers from first row
@@ -42,7 +47,11 @@ export const filePlugin = new Elysia()
       
       if (missingHeaders.length > 0) {
         set.status = 400;
-        return { error: `Missing required headers: ${missingHeaders.join(", ")}` };
+        return { 
+          success: false,
+          message: "Invalid file uploaded.",
+          details: `Missing required headers: ${missingHeaders.join(", ")}` 
+        };
       }
 
       // Validate data rows
@@ -74,17 +83,18 @@ export const filePlugin = new Elysia()
       return {
         success: true,
         message: "File validated successfully",
-        headers,
-        validRows: validRows.length,
-        invalidRows: invalidRows.length,
-        sampleData: validRows.slice(0, 3), // Return first 3 valid rows as sample
-        invalidSamples: invalidRows.slice(0, 3) // Return first 3 invalid rows as sample
+        details: "File checked, now proceed with other steps.",
+        validData: { validRows, validLength: validRows.length },
+        invalidData: { invalidRows, invalidLength: invalidRows.length }
       };
 
-    } catch (err: any) {
-      console.error('Upload error:', err);
+    } catch (err) {
       set.status = 500;
-      return { error: 'Failed to process file', details: err.message };
+      return { 
+        success: false,
+        message: 'Failed to process file', 
+        details: err instanceof Error ? err.message : "Something went wrong in processing a file."
+      };
     }
   })
 

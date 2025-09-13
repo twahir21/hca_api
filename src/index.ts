@@ -8,6 +8,5 @@ const app = new Elysia()
   .use(AllPlugins)
   .listen(3000);
 
-console.log(`
-  🚀 BlackStack Server initialized: 🦊 Elysia is running ... at http://${app.server?.hostname}:${app.server?.port}
-  `);
+console.log(` SERVER:
+    🚀 BlackStack Server initialized: 🦊 Elysia is running ... at http://${app.server?.hostname}:${app.server?.port}`);
