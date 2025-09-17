@@ -1,8 +1,9 @@
 import { NextSMSHeaders } from "../../const/headers.const";
+import { smsDatabase } from "./sms.db";
 import { isSmsSuccess, SmsResult } from "./sms.types";
 
 export const smsController = {
-    post: async (
+    sendWithPhone: async (
         body: {
             message: string,
             singlePhone: string
@@ -57,6 +58,19 @@ export const smsController = {
         } catch (error) {
             console.error("Error fetching balance:", error);
             throw error;
+        }
+    },
+    addingContact: async ( body: {
+        name: string,
+        phone: string
+    }): Promise<{
+        success: boolean,
+        message: string
+    }> => {
+        const result = await smsDatabase.createContact({ name: body.name, phone: body.phone })
+        return {
+            success: result.success,
+            message: result.message
         }
     }
 }

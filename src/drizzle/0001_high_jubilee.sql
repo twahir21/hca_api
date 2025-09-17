@@ -1,0 +1,1 @@
+ALTER TABLE "recent_messages" ADD COLUMN "user_role" text DEFAULT 'parent';

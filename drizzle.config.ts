@@ -1,12 +1,15 @@
 import 'dotenv/config';
 import { defineConfig } from 'drizzle-kit';
 
+console.log("pswd: ", process.env.POSTGRES_URL_LOCAL)
+
 export default defineConfig({
   out: './src/drizzle', // Where migrations will be generated
-  schema: ['./src/db/*.ts'], // Your schema files
+  schema: ['./src/schema/*.ts'], // Your schema files
   dialect: 'postgresql',
   dbCredentials: {
     url:
-        process.env.NODE_ENV = process.env.POSTGRES_URL_LOCAL!,
+      process.env.POSTGRES_URL_LOCAL!,
   },
 });
+

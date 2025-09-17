@@ -5,7 +5,7 @@ type validErr = {
 }
 
 export const smsValidation = {
-    post: t.Object({
+    verifyExcel: t.Object({
         message: t.String({
             minLength: 2,
             maxLength: 160,
@@ -25,6 +25,28 @@ export const smsValidation = {
                     message: "Phone Number must be valid."
                 }
             }
+        })
+    }),
+    contactPost: t.Object({
+        name: t.String({
+            minLength: 2,
+            maxLength: 40,
+            error(): validErr {
+                return {
+                    success: false, 
+                    message: 'Name must be between 2-40 characters'
+                }
+            }
+        }),
+        phone: t.String({
+            minLength: 12,
+            maxLength: 12,
+            error(): validErr {
+                return {
+                    success: false, 
+                    message: 'Phone must be valid starts with 255'
+                }
+            }            
         })
     })
 }
