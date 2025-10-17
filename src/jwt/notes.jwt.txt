@@ -1,0 +1,3 @@
+you must define exp in each route to enable jwt to expire 
+
+1. normally in 5-15min and refresh token mechanism.

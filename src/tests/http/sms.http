@@ -1,0 +1,8 @@
+### Get sms analytics
+GET http://localhost:8080/sms/sms-analytics
+Accept: application/json
+
+### Get recent sms
+GET http://localhost:8080/sms/get-recent-sms
+Accept: application/json
+
