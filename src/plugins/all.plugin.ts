@@ -2,6 +2,7 @@ import Elysia from "elysia";
 import { bulkSMSPlugin } from "../main/messages/sms.plugin";
 import prometheusPlugin from 'elysia-prometheus'
 import { LoginPlugin } from "../main/login/login.plugin";
+import { main } from "./global.plugin";
 
 export const AllPlugins = new Elysia({ name: "All mini API "})
 	.use(
@@ -16,3 +17,4 @@ export const AllPlugins = new Elysia({ name: "All mini API "})
 	)
 	.use(LoginPlugin)
     .use(bulkSMSPlugin)
+	.use(main)

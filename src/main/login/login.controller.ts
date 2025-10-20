@@ -8,14 +8,14 @@ export const loginController = {
     login: async ({ body , set }: { body: loginBody; set: Set }) => {
         // check if session exist
         const isExist = await isSessionExist(body.sessionId);
-        // if (isExist) {
-        //     set.status = "Already Reported";
-        //     return {
-        //         success: false,
-        //         message: "Session already exist",
-        //         sessionId: body.sessionId
-        //     }
-        // }
+        if (isExist) {
+            set.status = "Already Reported";
+            return {
+                success: false,
+                message: "Session already exist",
+                sessionId: body.sessionId
+            }
+        }
         // 2FA (password + OTP)
         const verifyUser = await loginDatabase.login({ body, set });
         if (!verifyUser.success) return {
@@ -37,7 +37,8 @@ export const loginController = {
             userId: verifyUser.data.userId,
             role: verifyUser.data.role,
             otpInput: OTP,
-            phoneNumber: verifyUser.data.phone
+            phoneNumber: verifyUser.data.phone,
+            username: verifyUser.data.username
         })
 
         return {

@@ -32,5 +32,8 @@ export const LoginValidators = {
     verifyOTP: t.Object({
         sessionId: t.String(),
         otpInput: t.String()
+    }),
+    resendOTP: t.Object({
+        sessionId: t.String()
     })
 }

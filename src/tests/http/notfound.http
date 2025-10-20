@@ -1,0 +1,8 @@
+@baseUrl=http://localhost:8080
+GET {{baseUrl}}/
+Accept: application/json
+Content-Type: application/json
+
+### Test Not Found Endpoint
+GET {{baseUrl}}/non-existing-endpoint
+Accept: application/json

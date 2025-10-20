@@ -18,12 +18,13 @@ export const generateOTP = (length = OTP_LENGTH) => {
 
 const hashOTP = (otp: string) => { return  Bun.hash(otp).toString(); };
 
-export const saveOTP = async ({ userId, role, otpInput, phoneNumber }: { userId: string, role: string, otpInput: string; phoneNumber: string }) => {
+export const saveOTP = async ({ userId, role, otpInput, phoneNumber, username }: { userId: string, role: string, otpInput: string; phoneNumber: string, username: string }) => {
     await redis.set(`otp:session:${sessionId}`, JSON.stringify({
         userId,
         role,
         otp: hashOTP(otpInput),
-        phoneNumber
+        phoneNumber,
+        username
     }), "EX", OTP_TTL);
     await redis.set(`otp_attempts:${userId}`, "0", "EX", OTP_TTL);
 
@@ -48,10 +49,20 @@ export const verifyOTP = async ({  otpInput, sessionId }: { sessionId: string, o
                 message: "Too many attempts",
             }
         }
+
+        const parsedOTP = JSON.parse(getOTP) as {
+            userId: string,
+            role: "admin" | "parent" | "teacher" | "invalid",
+            otp: string, // hashed OTP
+            phoneNumber: string,
+            username: string 
+        };
     
-    if (getOTP !== hashOTP(otpInput)) return {
-        success: false,
-        message: "Invalid OTP"
+    if (parsedOTP.otp !== hashOTP(otpInput)) {
+        return {
+            success: false,
+            message: "Invalid OTP"
+        }
     }
 
     await redis.del(`otp:sesssion:${ sessionId }`);
@@ -78,7 +89,8 @@ export const getOTPData = async ({ sessionId }: { sessionId: string }) => {
         userId: string,
         role: "admin" | "parent" | "teacher" | "invalid",
         otp: string, // hashed OTP
-        phoneNumber: string 
+        phoneNumber: string,
+        username: string 
     };
 
     return {
@@ -86,7 +98,8 @@ export const getOTPData = async ({ sessionId }: { sessionId: string }) => {
         message: "OTP found",
         phoneNumber: result.phoneNumber,
         userId: result.userId,
-        role: result.role
+        role: result.role,
+        username: result.username
     }
 }
 

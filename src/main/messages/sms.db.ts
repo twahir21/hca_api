@@ -3,6 +3,8 @@ import { db } from "../../connections/drizzle.conn";
 import { contactsTable, groupContactsTable, groupsTable, recentMessagesTable, sentSmsCountTable } from "../../schema/sms.schema";
 import { Set } from "../../types/type";
 import { createGroup, editGroup, GroupedResult, massiveContact, recentSMS, smsAnalytics } from "./sms.types";
+import { cacheExists, cacheGet, cacheSave } from "../../cache/redis.cache";
+import { cacheNames } from "../../const/cache.const";
 
 export type returnType = {
     success: boolean;
@@ -39,7 +41,9 @@ export const smsDatabase = {
             }
             // 2. If pass, insert to database
             await db.insert(contactsTable).values({
-                name, phone
+                // format name to Title Case
+                name: name.trim().toLowerCase().split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "), 
+                phone
             });
             set.status = "OK";
             return {
@@ -62,6 +66,24 @@ export const smsDatabase = {
             const page = parseInt(currentPage) || 1;
             const perPage = parseInt(limit) || 5;
             const offset = (page - 1) * perPage;
+
+            // check redis first
+            const isData = await cacheExists(cacheNames.CONTACTS);
+            const isTotal = await cacheExists(cacheNames.CONTACTS_TOTAL);
+
+            if (isData && isTotal && page === 1 && perPage === 5 && !search) {
+                const data = await cacheGet(cacheNames.CONTACTS);
+                const total = await cacheGet(cacheNames.CONTACTS_TOTAL);
+
+                if (data && total) {
+                    set.status = "OK";
+                    return {
+                        success: true,
+                        message: "Contacts fetched successfully",
+                        fetchContactsData: { data, total }
+                    }
+                }
+            }
 
             // 1. define where clause for search
             const whereClause = search
@@ -100,17 +122,17 @@ export const smsDatabase = {
                     message: "No contacts available"
                 }
             }
-
-            const contacts = data.map(c => ({
-                ...c,
-                name: c.name.trim().toLowerCase().split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
-            }));
+            if (!search && page === 1 && perPage === 5) {
+                // cache the data in redis for next time
+                cacheSave({ name: cacheNames.CONTACTS, value: data });
+                cacheSave({ name: cacheNames.CONTACTS_TOTAL, value: total });
+            }
 
             set.status = "OK";
             return {
                 success: true,
                 message: "Contacts fetched successfully",
-                fetchContactsData: { data: contacts, total }
+                fetchContactsData: { data, total }
             }
         } catch (error) {
             set.status = "Internal Server Error"
@@ -204,7 +226,8 @@ export const smsDatabase = {
             // 1. Update the contact
             await db.update(contactsTable)
             .set({
-                name: body.name,
+                // update to Title Case
+                name: body.name.trim().toLowerCase().split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
                 phone: body.phone
             })
             .where(eq(contactsTable.id, body.id));

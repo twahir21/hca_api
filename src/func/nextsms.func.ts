@@ -111,7 +111,7 @@ export const sendOTPSMS = async ({ phoneArray, message, set } : { phoneArray: st
         set.status = "Accepted";
         return {
             success: true,
-            message: "OTP sent successfully"
+            message: result.messages[0].status.description || "OTP sent successfully"
         }
     } catch (error) {
         set.status = "Internal Server Error";

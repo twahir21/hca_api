@@ -27,13 +27,15 @@ export const LoginPlugin = new Elysia({ name: "Login API" })
         }
 
         // issue a jwt.
-        const { userId, role } = await getOTPData({ sessionId: body.sessionId });
+        const { userId, role, username } = await getOTPData({ sessionId: body.sessionId });
         const authToken = await jwt.sign ({ userId, role });
         
         return {
             success: true,
             message: "You have successfully logged in",
-            authToken
+            authToken,
+            role,
+            username
         }
     }, {
         body: LoginValidators.verifyOTP,
@@ -50,6 +52,18 @@ export const LoginPlugin = new Elysia({ name: "Login API" })
         }
 
     })
-    // .post("/resend-OTP", async ({ body, set }) => {
-    //     return await loginController.resendOTP({ body, set });
-    // })
+    .post("/resend-OTP", async ({ body, set }) => {
+        return await loginController.resendOTP({ body, set });
+    }, {
+        body: LoginValidators.resendOTP,
+        beforeHandle({ body, set }) {
+            body.sessionId = xss(body.sessionId).trim()
+            if(!body.sessionId) {
+                set.status = "Bad Request";
+                return {
+                    success: false,
+                    message: "Session ID is required",
+                }
+            }
+        }
+    })
