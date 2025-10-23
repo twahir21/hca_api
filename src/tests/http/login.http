@@ -7,3 +7,9 @@ Content-Type: application/json
   "username": "admin",
   "password": "admin@123"
 }
+
+### POST redis
+GET http://localhost:8080/parent
+Accept: application/json
+Content-Type: application/json
+

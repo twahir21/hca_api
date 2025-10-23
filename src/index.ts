@@ -13,9 +13,11 @@ const app = new Elysia()
     }
   })
   .get("/", () => "Hello, from blackStack Elysia API")
-  .use(cors({
-    origin: ["http://localhost:5173", "https://accounts.highercareer.academy"]
-  }))
+  .use(cors(
+  //   {
+  //   origin: ["http://localhost:5173", "https://accounts.highercareer.academy"]
+  // }
+))
   // used for rate-limiting, caching, analytics, custom header e.g. CORS
   .onRequest(() => {
     console.log("rate-limiting")

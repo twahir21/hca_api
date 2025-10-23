@@ -2,8 +2,10 @@ import Elysia from "elysia";
 import { smsValidation } from "./sms.valid";
 import xss from "xss";
 import { smsController } from "./sms.controller";
+import { verifyJWT } from "../../plugins/global.plugin";
 
 export const bulkSMSPlugin = new Elysia({ name: "Bulk sms API", prefix: "/sms" })
+    .use(verifyJWT)
     .post("send-via-excel", async ({ body, set }) => {
         // fields of file is ["Name", "Phone Number"]
         return await smsController.sendViaExcel({ file: body.file, set });
@@ -151,10 +153,24 @@ export const bulkSMSPlugin = new Elysia({ name: "Bulk sms API", prefix: "/sms" }
             body.groupName = xss(body.groupName).toLowerCase().trim();
         }
     })
+    // .guard({
+    //     beforeHandle({ role, set }) {
+    //         console.log("Checking role for SMS analytics and recent SMS routes");
+    //         console.log("User role:", role);
+    //         if (role === "invalid" || role === "parent" || !role) {
+    //             set.status = "Forbidden";
+    //             return {
+    //                 success: false,
+    //                 message: "Only for Authorized users",
+    //             }
+    //         }
+    //     }
+    // })
     .get("/sms-analytics", async ({ set }) => {
         return await smsController.smsAnalytics({ set });
     })
-    .get("/get-recent-sms", async ({ set, query }) => {
+    .get("/get-recent-sms", async ({ set, query, role, userId }) => {
+        console.log("role: ", role, userId)
         return await smsController.getRecentSMS({ set, currentPage: query.page ?? "1", limit: query.limit ?? "5", search: query.search ?? "" });
     })
 

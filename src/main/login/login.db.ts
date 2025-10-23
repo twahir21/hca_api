@@ -9,6 +9,7 @@ export const loginDatabase = {
     login: async ({ body, set }: { body: loginBody ; set: Set }): Promise<loginReturn> => {
         try {
             // await db.insert(usersTable).values({ username: "admin", password: await hash("hca@2026"), phone: "255674291587" });
+            // await db.insert(usersTable).values({ username: "teacher", password: await hash("hca@2026"), phone: "255740518762" });
             // 1. fetch data using username
             const data = await db
                 .select()

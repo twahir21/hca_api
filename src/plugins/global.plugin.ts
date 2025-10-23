@@ -1,5 +1,6 @@
 import Elysia from "elysia";
 import jwt from "@elysiajs/jwt";
+import { isSessionExist } from "../func/otp.func";
 
 
 export const jwtPlugin = new Elysia({ name : "JWT" })
@@ -57,3 +58,4 @@ export const main = new Elysia()
     .use(verifyJWT)
     // ✅ Hi is now available
     .get('/parent', ({ userId, role }) => userId)
+
