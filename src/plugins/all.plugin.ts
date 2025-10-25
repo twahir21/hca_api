@@ -5,6 +5,7 @@ import { LoginPlugin } from "../main/login/login.plugin";
 import { main } from "./global.plugin";
 import { ClassPlugin } from "../main/classes/class.plugin";
 import { SubjectPlugin } from "../main/subject/subject.plugin";
+import { TeachersPlugin } from "../main/teachers/teachers.plugin";
 
 export const AllPlugins = new Elysia({ name: "All mini API "})
 	// .use(
@@ -21,4 +22,5 @@ export const AllPlugins = new Elysia({ name: "All mini API "})
     .use(bulkSMSPlugin)
 	.use(ClassPlugin)
 	.use(SubjectPlugin)
+	.use(TeachersPlugin)
 	.use(main)

@@ -1,13 +1,55 @@
-import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-
+import { pgTable, primaryKey, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+// ────────────────────────────────
+// CLASSES TABLE
+// ────────────────────────────────
 export const ClassTable = pgTable("classes_table", {
     id: uuid("id").defaultRandom().primaryKey().notNull(),
-    name: text("name").notNull().unique(),
+    name: varchar("name", { length: 100 }).unique().notNull(),
+    level: varchar("level", { length: 50 }), // optional (e.g. Primary, pre-school, etc.)
     createdAt: timestamp("created_at").defaultNow().notNull()
 });
 
+
+// ────────────────────────────────
+// SUBJECTS TABLE
+// ────────────────────────────────
 export const SubjectTable = pgTable("subjects_table", {
-    id: uuid("id").defaultRandom().primaryKey().notNull(),
-    name: text("name").notNull().unique(),
-    createdAt: timestamp("created_at").defaultNow().notNull()
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: varchar("name", { length: 100 }).unique().notNull(),
+  code: varchar("code", { length: 20 }), // optional (e.g. COU105)
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+// ────────────────────────────────
+// TEACHERS TABLE
+// ────────────────────────────────
+export const TeachersTable = pgTable("teachers_table", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 30 }).unique().notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+
+
+// ──────────────────────────────────────────
+// JUNCTION TABLE: Teacher ↔ Subject ↔ Class
+// ──────────────────────────────────────────
+export const TeacherSubjectClassTable = pgTable(
+  "teacher_subject_class_table",
+  {
+    teacherId: uuid("teacher_id")
+      .references(() => TeachersTable.id)
+      .notNull(),
+    subjectId: uuid("subject_id")
+      .references(() => SubjectTable.id)
+      .notNull(),
+    classId: uuid("class_id")
+      .references(() => ClassTable.id)
+      .notNull(),
+    assignedAt: timestamp("assigned_at").defaultNow(),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.teacherId, t.subjectId, t.classId] }), // composite key
+  })
+);
