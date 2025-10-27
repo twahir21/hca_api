@@ -5,99 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1757912126275,
-      "tag": "0000_dapper_marten_broadcloak",
+      "when": 1761458720238,
+      "tag": "0000_sloppy_grim_reaper",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1757949377655,
-      "tag": "0001_high_jubilee",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1758812159132,
-      "tag": "0002_lying_impossible_man",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1759915486158,
-      "tag": "0003_polite_captain_america",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1759942382293,
-      "tag": "0004_fixed_metal_master",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1759984670492,
-      "tag": "0005_free_squadron_supreme",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1759985154429,
-      "tag": "0006_wonderful_puma",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1760510589440,
-      "tag": "0007_nifty_doctor_octopus",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1760600675958,
-      "tag": "0008_nice_the_phantom",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1760602183341,
-      "tag": "0009_blue_sersi",
-      "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "7",
-      "when": 1760614559132,
-      "tag": "0010_blue_star_brand",
-      "breakpoints": true
-    },
-    {
-      "idx": 11,
-      "version": "7",
-      "when": 1761221885809,
-      "tag": "0011_slimy_cargill",
-      "breakpoints": true
-    },
-    {
-      "idx": 12,
-      "version": "7",
-      "when": 1761292384269,
-      "tag": "0012_petite_trish_tilby",
-      "breakpoints": true
-    },
-    {
-      "idx": 13,
-      "version": "7",
-      "when": 1761317703470,
-      "tag": "0013_clean_typhoid_mary",
+      "when": 1761476600996,
+      "tag": "0001_sloppy_sunset_bain",
       "breakpoints": true
     }
   ]

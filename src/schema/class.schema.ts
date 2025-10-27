@@ -1,4 +1,5 @@
 import { pgTable, primaryKey, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import { usersTable } from "./users.schema";
 // ────────────────────────────────
 // CLASSES TABLE
 // ────────────────────────────────
@@ -25,8 +26,7 @@ export const SubjectTable = pgTable("subjects_table", {
 // ────────────────────────────────
 export const TeachersTable = pgTable("teachers_table", {
   id: uuid("id").defaultRandom().primaryKey(),
-  name: varchar("name", { length: 255 }).notNull(),
-  phone: varchar("phone", { length: 30 }).unique().notNull(),
+  userId: uuid("user_id").references(() => usersTable.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -50,6 +50,7 @@ export const TeacherSubjectClassTable = pgTable(
     assignedAt: timestamp("assigned_at").defaultNow(),
   },
   (t) => ({
+    // composite key to ensure no single teacher can be assigned the same subject to the same class more than once.
     pk: primaryKey({ columns: [t.teacherId, t.subjectId, t.classId] }), // composite key
   })
 );

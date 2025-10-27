@@ -1,1 +1,0 @@
-ALTER TABLE "recent_messages" ALTER COLUMN "created_at" SET NOT NULL;

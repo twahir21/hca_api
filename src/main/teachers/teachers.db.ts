@@ -3,14 +3,16 @@ import { db } from "../../connections/drizzle.conn";
 import { ClassTable, SubjectTable, TeachersTable, TeacherSubjectClassTable } from "../../schema/class.schema";
 import { Set } from "../../types/type"
 import { baseTeacherReturn, TeacherBody } from "./teachers.types";
+import { usersTable } from "../../schema/users.schema";
+import { hash } from "../../security/pswd.sec";
 
 export const TeachersDatabase = {
-    createTeacher: async ({ body , set }: { set: Set, body: TeacherBody }): Promise<baseTeacherReturn> => {
+    createTeacher: async ({ body , set, userInfo }: { set: Set, body: TeacherBody; userInfo: { username: string; password: string} }): Promise<baseTeacherReturn> => {
         try {
             // 0. Check if same teacher exists
             const isExist = await db.select()
-                                .from(TeachersTable)
-                                .where(eq(TeachersTable.name, body.name));
+                                .from(usersTable)
+                                .where(eq(usersTable.username, userInfo.username));
 
             if(isExist.length > 0) {
                 set.status = "Conflict";
@@ -51,14 +53,26 @@ export const TeachersDatabase = {
                     }
                 }
 
+                // create the user first
+                const [user] = await tx
+                    .insert(usersTable)
+                    .values({
+                        role: "teacher",
+                        username: userInfo.username,
+                        password: await hash(userInfo.password),
+                        phone: body.phone
+                    }).returning({
+                        userId: usersTable.id,
+                        teacherName: usersTable.username
+                    })
+
                 // 3. Create a teacher
                 const [teacher] = await tx
                     .insert(TeachersTable)
                     .values({
-                        name: body.name.trim(),
-                        phone: body.phone.trim(),
+                        userId: user.userId,
                     })
-                .returning({ id: TeachersTable.id, name: TeachersTable.name });
+                .returning({ id: TeachersTable.id });
 
                 const subjectIds = await tx.select({
                     id: SubjectTable.id
@@ -89,7 +103,7 @@ export const TeachersDatabase = {
                 }
 
                 returnMsg = `
-                    ${teacher.name} is saved successfully, with ${classIds.length} class(es) and ${subjectIds.length} subject(s)
+                    ${user.teacherName} is saved successfully, with ${classIds.length} class(es) and ${subjectIds.length} subject(s)
                 `
             });
 
@@ -169,6 +183,7 @@ export const TeachersDatabase = {
                 .innerJoin(TeachersTable, eq(TeacherSubjectClassTable.teacherId, TeachersTable.id))
                 .innerJoin(SubjectTable, eq(TeacherSubjectClassTable.subjectId, SubjectTable.id))
                 .innerJoin(ClassTable, eq(TeacherSubjectClassTable.classId, ClassTable.id))
+                
                 .where(
                     and(
                         eq(TeachersTable.id, teacherId),
@@ -201,13 +216,14 @@ export const TeachersDatabase = {
             // 1. which teachers teachs maths and their classes
             const teachersTeachs = await db
                 .select({
-                    teacherName: TeachersTable.name,
+                    teacherName: usersTable.username,
                     className: ClassTable.name
                 })
                 .from(TeacherSubjectClassTable)
                 .innerJoin(TeachersTable, eq(TeacherSubjectClassTable.teacherId, TeachersTable.id))
                 .innerJoin(SubjectTable, eq(TeacherSubjectClassTable.subjectId, SubjectTable.id))
                 .innerJoin(ClassTable, eq(TeacherSubjectClassTable.classId, ClassTable.id))
+                .innerJoin(usersTable, eq(TeachersTable.userId, usersTable.id))
                 .where(eq(SubjectTable.name, subjectName));
             
             // 2. which classes maths is taught (same above query)
@@ -215,12 +231,13 @@ export const TeachersDatabase = {
             // 3. who teaches math in form 1
             const teacherTeachClass = await db
                 .select({
-                    teacherName: TeachersTable.name,
+                    teacherName: usersTable.username,
                 })
                 .from(TeacherSubjectClassTable)
                 .innerJoin(TeachersTable, eq(TeacherSubjectClassTable.teacherId, TeachersTable.id))
                 .innerJoin(SubjectTable, eq(TeacherSubjectClassTable.subjectId, SubjectTable.id))
                 .innerJoin(ClassTable, eq(TeacherSubjectClassTable.classId, ClassTable.id))
+                .innerJoin(usersTable, eq(TeachersTable.userId, usersTable.id))
                 .where(
                     and(
                         eq(SubjectTable.name, subjectName),
@@ -247,12 +264,13 @@ export const TeachersDatabase = {
             await db
                 .select({
                     subjectName: SubjectTable.name,
-                    teachersName: TeachersTable.name
+                    teachersName: usersTable.username
                 })
                 .from(TeacherSubjectClassTable)
                 .innerJoin(TeachersTable, eq(TeacherSubjectClassTable.teacherId, TeachersTable.id))
                 .innerJoin(SubjectTable, eq(TeacherSubjectClassTable.subjectId, SubjectTable.id))
                 .innerJoin(ClassTable, eq(TeacherSubjectClassTable.classId, ClassTable.id))
+                .innerJoin(usersTable, eq(TeachersTable.userId, usersTable.id))
                 .where(eq(ClassTable.name, className));
 
             // 2. how many subjects and how many teachers teachs form 1

@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX "unique_group_contact" ON "group_contacts_table" USING btree ("group_id","contact_id");

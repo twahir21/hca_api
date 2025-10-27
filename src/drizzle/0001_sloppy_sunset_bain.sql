@@ -1,0 +1,1 @@
+ALTER TABLE "teachers_table" ADD COLUMN "status" varchar(20) DEFAULT 'pending';

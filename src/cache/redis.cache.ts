@@ -1,8 +1,8 @@
 import { redis } from "bun";
 import { cacheTime } from "../const/cache.const";
 
-export const cacheSave = ({ name, value }: { name: string; value: Object }) => {
-  redis.set(name, JSON.stringify(value), "EX", cacheTime.ONE_WEEK); // 7 days expiration
+export const cacheSave = async ({ name, value, expiresIn }: { name: string; value: Object; expiresIn?: number }) => {
+  await redis.set(name, JSON.stringify(value), "EX", expiresIn ?? cacheTime.ONE_WEEK); // 7 days expiration
 };
 
 export const cacheGet = async (name: string) => {
@@ -11,8 +11,8 @@ export const cacheGet = async (name: string) => {
   return JSON.parse(value);
 };
 
-export const cacheDelete = (name: string) => {
-  redis.del(name);
+export const cacheDelete = async (name: string) => {
+  await redis.del(name);
 };
 
 export const cacheExists = async (name: string) => {
