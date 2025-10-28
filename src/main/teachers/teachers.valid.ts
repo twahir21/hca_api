@@ -47,5 +47,38 @@ export const TeachersValidators = {
                 }
             }
         })
+    }),
+    saveTeacher: t.Object({
+        username: t.String({
+            maxLength: 40,
+            minLength: 3,
+            error(): validErr {
+                return {
+                    success: false,
+                    message: 'Username must be 3-40 characters'
+                }
+            }
+        }),
+        password: t.String({
+            minLength: 6,
+            maxLength: 40,
+            error(): validErr {
+                return {
+                    success: false,
+                    message: "Password must be 6-40 characters"
+                }
+            }
+        })
+    }),
+    teacherQuery: t.Object({
+        token: t.String({
+            minLength: 3,
+            error() : validErr {
+                return {
+                    success: false,
+                    message: "token must not be less than 3 characters"
+                }
+            }
+        })
     })
 }

@@ -1,6 +1,5 @@
 import Elysia from "elysia";
 import jwt from "@elysiajs/jwt";
-import { isSessionExist } from "../func/otp.func";
 
 
 export const jwtPlugin = new Elysia({ name : "JWT" })
@@ -8,6 +7,13 @@ export const jwtPlugin = new Elysia({ name : "JWT" })
         name: 'jwt',
         secret: process.env.JWT_TOKEN!,
         exp: "180d"
+    }))
+
+export const linkToken = new Elysia()
+    .use(jwt({
+        name: 'token',
+        secret: process.env.JWT_TOKEN!,
+        exp: "60m"
     }))
 
 
