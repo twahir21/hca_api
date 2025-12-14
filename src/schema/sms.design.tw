@@ -1,0 +1,28 @@
+┌─────────────────────┐        ┌─────────────────────┐
+│     contacts_table  │        │     groups_table    │
+│─────────────────────│        │─────────────────────│
+│ id (PK)             │        │ id (PK)             │
+│ phone (unique)      │        │ name (unique)       │
+│ name                │        │ createdAt           │
+│ createdAt           │        └─────────────────────┘
+└─────────────────────┘                 ▲
+          ▲                             │
+          │                             │
+          │                  ┌────────────────────────┐
+          │                  │   group_contacts_table │
+          │                  │────────────────────────│
+          └────────────────▶ │ id (PK)                │
+                             │ groupId (FK→groups)    │
+                             │ contactId (FK→contacts)│
+                             │ addedAt                │
+                             └────────────────────────┘
+
+┌────────────────────────┐
+│  recent_messages_table │
+│────────────────────────│
+│ id (PK)                │
+│ message                │
+│ groupId (FK→groups)    │ (nullable)
+│ contactId (FK→contacts)│ (nullable)
+│ createdAt              │
+└────────────────────────┘

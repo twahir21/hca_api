@@ -1,0 +1,29 @@
+┌──────────────────────┐        ┌──────────────────────┐
+│    teachers_table    │        │    subjects_table    │
+│──────────────────────│        │──────────────────────│
+│ id (PK)              │        │ id (PK)              │
+│ name                 │        │ name (unique)        │
+│ phone (unique)       │        │ code (optional)      │
+│ createdAt            │        │ createdAt            │
+└──────────────────────┘        └──────────────────────┘
+          ▲                               ▲
+          │                               │
+          │                               │
+          │                 ┌───────────────────────────────┐
+          │                 │ teacher_subject_class_table   │
+          │                 │───────────────────────────────│
+          └───────────────▶ │ teacherId (FK→teachers)       │
+                            │ subjectId (FK→subjects)       │
+                            │ classId   (FK→classes)        │
+                            │ assignedAt                    │
+                            └───────────────────────────────┘
+                                            ▲
+                                            │
+                              ┌────────────────────────────┐
+                              │        classes_table       │
+                              │────────────────────────────│
+                              │ id (PK)                    │
+                              │ name (unique)              │
+                              │ level / year (optional)    │
+                              │ createdAt                  │
+                              └────────────────────────────┘

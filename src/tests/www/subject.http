@@ -1,0 +1,38 @@
+### Create Subject
+@baseURL = http://localhost:8080
+POST {{baseURL}}/subjects/create-subject
+Content-Type: application/json
+Accept: application/json
+
+{
+    "name": "Mathematics"
+}
+
+### GET Subjectes
+GET {{baseURL}}/subjects/get-subjects
+Accept: application/json
+
+### GET TOTAL Subjectes
+GET {{baseURL}}/subjects/total-subjects
+Accept: application/json
+
+
+
+### Update Subject
+PUT {{baseURL}}/subjects/update-subject
+Accept: application/json
+Content-Type: application/json
+
+{
+    "id": "ae77a1ab-d5ca-4156-81c2-ad771e8fad21",
+    "name": "English"
+}
+
+### delete Subject
+DELETE {{baseURL}}/subjects/delete-subject
+Accept: application/json
+Content-Type: application/json
+
+{
+    "id": "ae77a1ab-d5ca-4156-81c2-ad771e8fad21",
+}

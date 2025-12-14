@@ -1,0 +1,16 @@
+### POST LOGIN DATA
+@baseurl = http://localhost:8080
+POST {{baseurl}}/login
+Accept: application/json
+Content-Type: application/json
+
+{
+  "username": "Blackcoder",
+  "password": "ABDi2003@",
+  "sessionId": ""
+}
+
+### POST - Verify OTP
+GET http://localhost:8080/parent
+Accept: application/json
+Content-Type: application/json

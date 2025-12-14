@@ -1,0 +1,4 @@
+this is used for third parties api like
+1. Bulk messages integration
+2. payments gateways
+3. and more ...

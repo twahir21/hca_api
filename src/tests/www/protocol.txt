@@ -1,0 +1,8 @@
+1. create a school with /school/create-school
+2. get school-id with GET school
+3. initiate school admin with /links/school-admin
+3. generate school admin account with /links/initiate-account
+
+4. Login
+5. verify-otp to get authToken
+6. 

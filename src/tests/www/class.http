@@ -1,0 +1,39 @@
+### Create Class
+@baseURL = http://localhost:8080
+POST {{baseURL}}/classes/create-class
+Content-Type: application/json
+Accept: application/json
+
+{
+    "name": "Standard 1A"
+}
+
+### GET classes
+GET {{baseURL}}/classes/get-classes
+Accept: application/json
+
+### GET TOTAL classes
+GET {{baseURL}}/classes/total-classes
+Accept: application/json
+
+
+
+### Update Class
+PUT {{baseURL}}/classes/update-class
+Accept: application/json
+Content-Type: application/json
+
+{
+    "id": "893d098e-e722-4b65-b5de-720bfc79cde6",
+    "name": "Standard 2B"
+}
+
+### delete class
+DELETE {{baseURL}}/classes/delete-class
+Accept: application/json
+Content-Type: application/json
+
+{
+    "id": "893d098e-e722-4b65-b5de-720bfc79cde6",
+}
+

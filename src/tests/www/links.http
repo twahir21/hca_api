@@ -1,0 +1,47 @@
+@baseurl = http://localhost:8080
+
+### GET 
+GET {{baseurl}}/links/
+Accept: application/json
+Content-Type: application/json
+
+### POST (new token to school-admin)
+POST {{baseurl}}/links/school-admin
+Accept: application/json
+Content-Type: application/json
+
+{
+    "schoolId": "fe1cda76-6f49-4e42-8523-56bb1a603d3f",
+    "phone": "255674291587",
+    "email": "twahirsudy3@gmail.com"
+}
+
+### POST (new token to new user)
+POST {{baseurl}}/links/admin
+Accept: application/json
+Content-Type: application/json
+
+{
+
+}
+
+
+### INITIATE ACCOUNT
+POST {{baseurl}}/links/initiate-account/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhYjcyYWM2NWMzZWFhMjRkOTU2MjY4OTFkNTg1Yzk5ZGUwN2M1MTY0NTUxMmQ5MDUyYTM0ZmEzMjUzYWU5ZWFlIiwidG9rZW5JZCI6IjMzNDYwNTVjLWE4YTgtNDY1OC1iZWE2LTA1MDI0ZDk4NzEzMSIsImV4cCI6MTc2NDc0ODQzMSwiaWF0IjoxNzY0NzQ0ODMxfQ.AJfLClO5hw5pff-iNpcK8ReM1bElwO9htMH2QaqBaFg
+Accept: application/json
+Content-Type: application/json
+
+{
+    "fullName": "Twahir sudy abd",
+    "username": "twahir21d",
+    "password": "ABDi2003@"
+}
+
+### DELETE
+DELETE {{baseurl}}/schools/delete-school
+Accept: application/json
+Content-Type: application/json
+
+{ 
+    "schoolId": "c5700fbb-db5b-4f11-b50a-bd3f9ed6a16e"
+}

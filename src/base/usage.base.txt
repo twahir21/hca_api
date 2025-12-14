@@ -1,0 +1,4 @@
+this is used to define scheleton of something. Example
+1. OOP
+2. general func for caching.
+3. CRUD with db.

@@ -1,0 +1,12 @@
+### parent role
+@baseurl = http://localhost:8080
+
+GET {{baseurl}}/parent
+
+### 
+GET {{baseurl}}/isAdmin
+
+### 
+GET {{baseurl}}/classes/get-all-classes
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJkZGM1YmI4Zi1lNjFiLTQxYTctYjdiZi1iNDZhMTUyYTAyYmEiLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3NzczNzk5OTIsImlhdCI6MTc2MTgyNzk5Mn0.lCfypzGIjYw68I4UQ2v5CtzAYALKC1Qw_0LO_uSgmds

@@ -1,0 +1,22 @@
+@baseURL = http://localhost:8080
+### TEST mail
+POST {{baseURL}}/email/send-email
+Accept: application/json
+Content-Type: application/json
+
+{
+    "email": "twahirsudy3@gmail.com",
+    "subject": "Testing mail",
+    "message": "Hello, from testing mail messaging services ..."
+}
+
+### response
+{
+  "success": true,
+  "message": "OTP generated successfully",
+  "sessionId": "4f76bd2a5ccf2957df660668a2932e290b22925f2125796be90d0db75f6904ee",
+  "OTP": "947662"
+}
+# Failed query: select "roles"."role" from "user_role" left join "roles" on 
+# "roles"."id" = "user_role"."role_id" where "user_role"."user_id" = $1
+# params: 

@@ -1,0 +1,42 @@
+@baseurl = http://localhost:8080
+
+### GET 
+GET {{baseurl}}/users/get-users
+Accept: application/json
+Content-Type: application/json
+
+### POST
+POST {{baseurl}}/users/create-user
+Accept: application/json
+Content-Type: application/json
+
+{
+    "name": "hca",
+    "code" : "s0301",
+    "address": "arusha, Tanzania",
+    "phone": "255674291587",
+    "email": "twahirsudy3@gmail.com"
+}
+
+### PUT
+PUT {{baseurl}}/users/update-user
+Accept: application/json
+Content-Type: application/json
+
+{
+    "name": "hca",
+    "code" : "s0301",
+    "address": "arusha, Tanzania",
+    "phone": "255674231588",
+    "email": "twahirsudy3@gmail.com",
+    "schoolId": "c5700fbb-db5b-4f11-b50a-bd3f9ed6a16e"
+}
+
+### DELETE
+DELETE {{baseurl}}/users/delete-user
+Accept: application/json
+Content-Type: application/json
+
+{ 
+    "schoolId": "c5700fbb-db5b-4f11-b50a-bd3f9ed6a16e"
+}

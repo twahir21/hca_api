@@ -1,0 +1,51 @@
+@baseurl = http://localhost:8080
+
+### GET 
+GET {{baseurl}}/schools/get-schools
+Accept: application/json
+Content-Type: application/json
+
+### POST
+POST {{baseurl}}/schools/create-school
+Accept: application/json
+Content-Type: application/json
+
+{
+    "name": "hca",
+    "code" : "s0403",
+    "address": "arusha, Tanzania",
+    "phone": "255674291587",
+    "email": "twahirsudy3@gmail.com"
+}
+
+### PUT
+PUT {{baseurl}}/schools/update-school
+Accept: application/json
+Content-Type: application/json
+
+{
+    "name": "hca",
+    "code" : "s0301",
+    "address": "arusha, Tanzania",
+    "phone": "255674231588",
+    "email": "twahirsudy3@gmail.com",
+    "schoolId": "c5700fbb-db5b-4f11-b50a-bd3f9ed6a16e"
+}
+
+### DELETE
+DELETE {{baseurl}}/schools/delete-school
+Accept: application/json
+Content-Type: application/json
+
+{ 
+    "schoolId": "c5700fbb-db5b-4f11-b50a-bd3f9ed6a16e"
+}
+
+### GET USER SCHOOLS
+POST  {{baseurl}}/schools/get-user-schools
+Accept: application/json
+Content-Type: application/json
+
+{
+    "userId": "3407023b-e714-407e-ae24-7e96ac452fd9"
+}
