@@ -12,7 +12,14 @@ import { main } from "./global.plugin";
 // import { botPlugin } from "./bot/bot";
 // import { groqPlugin } from "./bot/qrok";
 
+
 export const AllPlugins = new Elysia({ name: "All mini API "})
+	// .onBeforeHandle(() => {
+	// })
+    // .onAfterResponse(() => {
+		// metrics 
+    //     console.log("[THIS RUNS]")
+    // })
 	.use(
 		prometheusPlugin({
 			metricsPath: '/metrics',

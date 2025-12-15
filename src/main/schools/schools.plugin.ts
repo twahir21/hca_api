@@ -3,9 +3,18 @@ import { schoolValidators } from "./schools.valid";
 import xss from "xss";
 import { schoolDatabase } from "./schools.db";
 
+
 export const schoolsPlugin = new Elysia({ prefix: "/schools"})
-    .get("/get-schools", async ({ set }) => {
-       return await schoolDatabase.getSchools({ set })
+    .get("/get-schools", async ({ set, query }) => {
+        console.log("Query: ", query)
+       return await schoolDatabase.getSchools({ set, query })
+    //  await trackPerformance(schoolDatabase.getSchools, ({ set })).then(r => r)
+    }, {
+        beforeHandle({ query }) {
+            query.search = xss(query.search).toLowerCase().trim();
+            query.page = xss(query.page).trim();
+            query.limit = xss(query.limit).trim();
+        }
     })
 
     .post("get-user-schools", async ({ body, set }) => {

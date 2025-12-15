@@ -14,16 +14,16 @@ const app = new Elysia()
     }
   })
   .use(openapi()) 
-  .get("/", () => "Hello, from blackStack Elysia API")
+  .get("/health", () => "Hello, from blackStack Elysia API")
   .use(cors(
     {
       origin: ["http://localhost:5173", "https://accounts.highercareer.academy"]
     }
   ))
   // used for rate-limiting, caching, analytics, custom header e.g. CORS
-  .onRequest(({ request }) => {
-    console.log("rate-limiting", request.url)
-  })
+  // .onRequest(({ request }) => {
+  //   console.log("rate-limiting", request.url)
+  // })
   .use(AllPlugins)
 
   .listen(8080);

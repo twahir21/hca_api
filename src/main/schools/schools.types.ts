@@ -16,18 +16,20 @@ export type baseSchoolReturn = {
 }
 
 export interface getSchools extends baseSchoolReturn {
-    schools: {
+    data: {
         id: string;
         name: string;
         code: string;
         address: string;
+        bulkSMSName: string | null;
         phone: string;
         subscriptionPlan: "Starter" | "Growth" | "Enterprice";
         status: "approved" | "inactive" | "suspended" | "expired" | "pending";
         email: string | null;
         expiredAt: Date | null;
+        lastActivity: Date | null;
         createdAt: Date | null;
         updatedAt: Date | null;
     }[],
-    totalSchools: number;
+    total: number;
 }

@@ -4,7 +4,7 @@ function fib (n: number): number {
 }
 
 // tracking func
-async function trackPerformance<T extends (...args: any[]) => any>(
+export async function trackPerformance<T extends (...args: any[]) => any>(
   fn: T,
   ...args: Parameters<T>
 ): Promise<ReturnType<T>> {
@@ -40,15 +40,3 @@ async function trackPerformance<T extends (...args: any[]) => any>(
 }
 
 
-// Works with sync
-trackPerformance(fib, 35).then(res => {
-  console.log("Fibonacci result:", res);
-});
-
-// Works with async
-trackPerformance(async (ms: number) => {
-  await new Promise(r => setTimeout(r, ms));
-  return "done!";
-}, 500).then(res => {
-  console.log("Async result:", res);
-});

@@ -1,4 +1,4 @@
-import { and, count, eq } from "drizzle-orm";
+import { and, asc, count, eq, like, or } from "drizzle-orm";
 import { db } from "../../connections/drizzle.conn";
 import { Set } from "../../types/type"
 import { baseSchoolReturn, getSchools, schoolBody, updateSchoolBody } from "./schools.types";
@@ -81,27 +81,49 @@ export const schoolDatabase = {
             }
         }
     },
-    getSchools: async ({ set }: { set: Set }): Promise<getSchools> => {
+    getSchools: async ({ set, query }: { set: Set; query: Record<string, string> }): Promise<getSchools> => {
         try {
+            // 1. initiate pagination variables
+            const page = parseInt(query.page) || 1;
+            const perPage = parseInt(query.limit) || 5;
+            const offset = (page - 1) * perPage;
+
+            // 2. define where for searching ...
+            const whereClause = query.search
+            ? or(
+                // school name
+                like(schoolTable.name, `%${query.search}%`),
+                eq(schoolTable.name, query.search)
+
+                // owner's info (email/phone)
+                // address
+                // ID
+                )
+            : undefined;
+
             const [totalSchools] = await db.select({ count: count(schoolTable) })
                 .from(schoolTable);
 
-            const schools = await db.select()
+            const data = await db.select()
                 .from(schoolTable)
+                .where(whereClause)
+                .orderBy(asc(schoolTable.name))
+                .limit(perPage)
+                .offset(offset);
         
             set.status = "OK";
             return {
                 success: true,
                 message: "Schools fetched successfully!",
-                schools,
-                totalSchools: totalSchools.count
+                data,
+                total: totalSchools.count
             }
         } catch (error) {
             set.status = "Internal Server Error";
             return {
                 success: false,
-                totalSchools: 0,
-                schools: [],
+                total: 0,
+                data: [],
                 message: error instanceof Error ?
                             error.message :
                             "Something went wrong in getting schools"

@@ -74,6 +74,7 @@ export const schoolTable = pgTable("school", {
     status: schoolStatusEnum("school_status").default("pending").notNull(),
     email: text("email").notNull(),
     expiredAt: timestamp("expired_at"),
+    lastActivity: timestamp("last_activity").defaultNow(),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date())
 }, t => ({
