@@ -15,25 +15,6 @@ export const linkValidations = {
                     message: "School ID is empty or not valid UUID"
                 }
             }
-        }),
-        phone: t.String({
-            minLength: 12,
-            maxLength: 12,
-            error(): validErr {
-                return {
-                    success: false,
-                    message: "Phone is empty or invalid TZ number"
-                }
-            }
-        }),
-        email: t.String({
-            format: "email",
-            error(): validErr{
-                return {
-                    success: false,
-                    message: "Email is empty or invalid"
-                }
-            }
         })
     }),
     initiateAccount: t.Object({

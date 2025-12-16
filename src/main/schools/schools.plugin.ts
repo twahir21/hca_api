@@ -6,7 +6,6 @@ import { schoolDatabase } from "./schools.db";
 
 export const schoolsPlugin = new Elysia({ prefix: "/schools"})
     .get("/get-schools", async ({ set, query }) => {
-        console.log("Query: ", query)
        return await schoolDatabase.getSchools({ set, query })
     //  await trackPerformance(schoolDatabase.getSchools, ({ set })).then(r => r)
     }, {
@@ -54,6 +53,7 @@ export const schoolsPlugin = new Elysia({ prefix: "/schools"})
             body.email = xss(body.email).trim()
             body.name = xss(body.name).trim()
             body.phone = xss (body.phone).trim()
+            body.bulkSMSName = xss(body.bulkSMSName).trim().toUpperCase()
         }
     })
 
@@ -76,5 +76,6 @@ export const schoolsPlugin = new Elysia({ prefix: "/schools"})
             body.name = xss(body.name).trim()
             body.phone = xss (body.phone).trim()
             body.schoolId = xss(body.schoolId).trim()
+            body.bulkSMSName = xss(body.bulkSMSName).trim().toUpperCase()
         }
     })

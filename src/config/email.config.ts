@@ -18,11 +18,15 @@ export async function sendEmail({
     fromEmail,
     subject,
     message,
+    title,
+    user
 }: {
     fromName: string;
-    fromEmail: string;
+    fromEmail?: string;
     subject: string;
     message: string;
+    title?: string;
+    user?: string[];
 }) {
     const html = `
 <!DOCTYPE html>
@@ -35,7 +39,7 @@ export async function sendEmail({
         body, html {
             margin: 0; padding: 0;
             font-family: Arial, sans-serif;
-            line-height: 1.6;
+            line-height: 2;
             color: #333;
             background-color: #f6f6f6;
         }
@@ -50,11 +54,11 @@ export async function sendEmail({
         .email-header {
             background-color: #4a90e2;
             color: #fff;
-            padding: 20px;
+            padding: 7px;
             text-align: center;
         }
         .email-content {
-            padding: 30px;
+            padding: 15px;
         }
         .subject {
             font-size: 18px;
@@ -81,7 +85,7 @@ export async function sendEmail({
 <body>
     <div class="email-container">
         <div class="email-header">
-            <h1>Message Notification</h1>
+            <h1>${title ?? "Message Notification"}</h1>
         </div>
 
         <div class="email-content">
@@ -91,7 +95,7 @@ export async function sendEmail({
 
         <div class="email-footer">
             <p>This is an automated message.</p>
-            <p>&copy; 2026 ShulePlus. All rights reserved.</p>
+            <p>&copy; 2026 SkuliPro. All rights reserved.</p>
         </div>
     </div>
 </body>
@@ -99,8 +103,8 @@ export async function sendEmail({
     `;
 
     const mailOptions = {
-        from: `"${fromName}" <${fromEmail}>`,
-        to: process.env.GMAIL_USER!,
+        from: `"${fromName}" <${fromEmail ?? process.env.GMAIL_USER!}>`,
+        to: user ?? process.env.GMAIL_USER!,
         subject,
         html,
     };

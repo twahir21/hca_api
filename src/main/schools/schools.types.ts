@@ -4,6 +4,7 @@ export type schoolBody = {
     address: string;
     phone: string;
     email: string;
+    bulkSMSName: string;
 }
 
 export interface updateSchoolBody extends schoolBody {

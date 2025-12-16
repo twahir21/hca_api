@@ -13,7 +13,5 @@ export type initiateAccountBody = {
 }
 
 export type sendTokenBody = {
-    phone: string;
-    email: string;
     schoolId: string;
 }

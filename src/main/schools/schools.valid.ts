@@ -47,6 +47,16 @@ export const schoolValidators = {
                 }
             }  
         }),
+        bulkSMSName: t.String({
+            maxLength: 20,
+            minLength: 1,
+            error (): validErr {
+                return {
+                    success: false,
+                    message: "Sender SMS name is invalid or empty"
+                }
+            }
+        }),
         email: t.String({
             maxLength: 60,
             minLength: 3,
@@ -108,6 +118,16 @@ export const schoolValidators = {
                     message: "Name must be valid and starts with 255"
                 }
             }  
+        }),
+        bulkSMSName: t.String({
+            maxLength: 20,
+            minLength: 1,
+            error (): validErr {
+                return {
+                    success: false,
+                    message: "Sender SMS name is invalid or empty"
+                }
+            }
         }),
         email: t.String({
             maxLength: 60,

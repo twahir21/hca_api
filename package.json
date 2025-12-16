@@ -17,6 +17,7 @@
     "@elysiajs/openapi": "^1.4.11",
     "@google/genai": "^1.29.0",
     "@types/nodemailer": "^7.0.4",
+    "bullmq": "^5.66.0",
     "crypto": "^1.0.1",
     "date-fns": "^4.1.0",
     "decimal.js": "^10.6.0",

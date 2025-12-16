@@ -35,6 +35,7 @@ export const schoolDatabase = {
                     email: body.email,
                     code: body.code,
                     phone: body.phone,
+                    bulkSMSName: body.bulkSMSName,
                     expiredAt: expireDate
                 }).returning({
                     id: schoolTable.id
@@ -145,9 +146,9 @@ export const schoolDatabase = {
                     message: "School is not found!"
                 }
             }
-            const { name, email, address, code, phone, schoolId } = body;
+            const { name, email, address, code, phone, schoolId, bulkSMSName } = body;
             await db.update(schoolTable).set({
-                name, email, address, code, phone
+                name, email, address, code, phone, bulkSMSName
             }).where(eq(schoolTable.id, schoolId));
 
             set.status = "OK";

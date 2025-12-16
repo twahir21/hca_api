@@ -5,6 +5,7 @@ import { isSmsSuccess, sendSMS, SmsResult } from "../main/messages/sms.types";
 import { sentSmsCountTable } from "../schema/sms.schema";
 import { Set } from "../types/type";
 
+
 // 1. Function to send sms
 export const sendNextSMS = async ({ phoneArray, message, set, body, sender, schoolId, userId } 
     : { phoneArray: string[], message: string, set: Set, body: sendSMS; sender: string; schoolId: string; userId: string  })
@@ -101,18 +102,27 @@ export const sendOTPSMS = async ({ phoneArray, message, set, sender } : { phoneA
         redirect: "follow",
         });
 
-        const result: SmsResult = await response.json();
-
-        result.messages.map( msg => {
-            if (!isSmsSuccess(msg)) {
-                set.status = "Bad Request";
-                return {
-                    success: false,
-                    message: msg.status.description || "Failed to send OTP"
-                };
+        if (!response.ok) {
+            return {
+                success: false,
+                message: "Something went wrong in message API"
             }
-        })
-        set.status = "Accepted";
+        }
+
+        const result: NextSMS = await response.json();
+
+        // loop all messages of result object
+        const rejected = result.messages.find(msg => msg.status.groupName !== "DELIVERED");
+        if (rejected) {
+            set.status = "Bad Request";
+            return {
+                success: false,
+                message: rejected.status.description || "Failed to send OTP"
+            };
+        }
+
+        // if all delivered
+        set.status = "OK";
         return {
             success: true,
             message: result.messages[0].status.description || "OTP sent successfully"

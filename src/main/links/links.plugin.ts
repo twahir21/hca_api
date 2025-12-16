@@ -11,156 +11,12 @@ import { schoolTable, tokenInfoTable } from "../../schema/core.schema";
 import { eq } from "drizzle-orm";
 import { redis } from "bun";
 import { linkDatabases } from "./links.db";
+import { sendEmail } from "../../config/email.config";
+import { RateLimitActivation } from "../../security/ratelimit.sec";
 
 export const linksPlugin = new Elysia({ prefix: "/links"})
     .use(linkToken)
     // u must run sms or email under bg job or queue (BullMQ)
-    .post("/school-admin", async ({ body, set, token }) => {
-
-        // 1. validate the school Id 
-        const isSchoolExist = await linkDatabases.validateSchoolId(body);
-
-        if (!isSchoolExist){
-            set.status = "Bad Request";
-            return {
-                success: false,
-                message: "No school found"
-            }
-        }
-
-        // save the tokenInfo to database
-        const [tokenInfoId] = await db.insert(tokenInfoTable)
-            .values({
-               role: "school-admin",
-               email: body.email,
-               phone: body.phone,
-               schoolId: body.schoolId 
-            }).returning({
-                id: tokenInfoTable.id
-            })        
-
-        const userToken = await token.sign({ 
-            tokenId: tokenInfoId.id, 
-            jti: randomBytes(32).toString("hex"),
-            exp: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour expiry
-        });
-
-        // select bulk sms name
-        const [sender] = await db.select({
-            bulkSMSName: schoolTable.bulkSMSName 
-        }).from(schoolTable)
-        .where(eq(schoolTable.id, body.schoolId))
-
-        if (!sender.bulkSMSName){
-            set.status = "Bad Request";
-            return {
-                success: false,
-                message: "For sending SMS, Sender name of school should be valid"
-            }
-        }
-
-        return {
-            userToken
-        }
-// better to use the queue like bullmq 
-//         return await sendOTPSMS({
-//             phoneArray: [body.phone],
-//             sender: sender.bulkSMSName,
-//             message:  `You’ve been added to HCA portal. Click below to activate your account and set your password.
-// 👇 Activate Account with link below within 1 hour.
-//             ${links.clientLink}/activate/?token=${userToken}`,
-//             set
-//         });
-        // provide a fallback option to send via email
-    }, {
-        body: linkValidations.createUser,
-        beforeHandle({ body, set }){
-            body.schoolId = xss(body.schoolId).trim();
-            body.email = xss(body.email).trim();
-            body.phone = xss(body.phone).trim();
-
-            if (!body.phone.startsWith("255")) {
-                set.status = "Bad Request";
-                return {
-                    success: false,
-                    message: "Phone number should start with 255"
-                }
-            }
-
-        }
-    })
-    .post("/:role", async ({ params, set, body, token  }) => {
-        // validate the role 
-        const isRole = allowedRoles.has(params.role as Roles)
-        
-        if (!isRole) {
-            set.status = "Bad Request";
-            return {
-                success: false,
-                message: "The Role requested is invalid"
-            }
-        }
-
-        const [tokenInfoId] = await db.insert(tokenInfoTable)
-            .values({
-               role: "school-admin",
-               email: body.email,
-               phone: body.phone,
-               schoolId: body.schoolId 
-            }).returning({
-                id: tokenInfoTable.id
-            });
-
-        const userToken = await token.sign({ 
-            tokenId: tokenInfoId.id, 
-            jti: randomBytes(32).toString("hex"),
-            exp: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour expiry
-        });
-
-
-        // select bulk sms name
-        const [sender] = await db.select({
-            bulkSMSName: schoolTable.bulkSMSName 
-        }).from(schoolTable)
-        .where(eq(schoolTable.id, body.schoolId))
-
-        if (!sender.bulkSMSName){
-            set.status = "Bad Request";
-            return {
-                success: false,
-                message: "For sending SMS, Sender name of school should be valid"
-            }
-        }
-
-        return await sendOTPSMS({
-            phoneArray: [body.phone],
-            sender: sender.bulkSMSName,
-            message:  `You’ve been added to HCA portal. Click below to activate your account and set your password.
-👇 Activate Account with link below within 1 hour.
-            ${links.clientLink}/activate/?token=${userToken}`,
-            set
-        });
-    }, {
-        body: linkValidations.createUser,
-        beforeHandle({ body, set }){
-            body.schoolId = xss(body.schoolId).trim();
-            body.email = xss(body.email).trim();
-            body.phone = xss(body.phone).trim();
-
-            if (!body.phone.startsWith("255")) {
-                set.status = "Bad Request";
-                return {
-                    success: false,
-                    message: "Phone number should start with 255"
-                }
-            }
-
-        },
-        afterHandle(){
-            // save the audit logs who invited whom when and schoolId
-            // you can send to queue for scaling
-        }
-    })
     // activate-account and verify token 
     .post("/initiate-account", async ({ body, set, token, query }) => {
         const userToken = query.token;
@@ -213,3 +69,169 @@ export const linksPlugin = new Elysia({ prefix: "/links"})
     .get("/get-users", "get-users")
     .put("/update-user", "updated")
     .delete("/delete-user", "deleted")
+
+    .use(RateLimitActivation)
+    .post("/school-admin", async ({ body, set, token, isRateLimited }) => {
+        console.log("rate limit", isRateLimited)
+        if(!isRateLimited){
+            set.status = "Too Many Requests";
+            return {
+                success: false,
+                message: "Too many requests, try after an hour"
+            }
+        }
+        // 1. validate the school Id 
+        const isSchoolExist = await linkDatabases.validateSchoolId(body);
+
+        if (!isSchoolExist){
+            set.status = "Bad Request";
+            return {
+                success: false,
+                message: "No school found"
+            }
+        }
+
+        // get phone and email from schoolId
+        const [contactInfo] = await db.select({
+            phone: schoolTable.phone,
+            email: schoolTable.email
+        }).from(schoolTable).where(eq(schoolTable.id, body.schoolId));
+
+        // save the tokenInfo to database
+        const [tokenInfoId] = await db.insert(tokenInfoTable)
+            .values({
+               role: "school-admin",
+               email: contactInfo.email,
+               phone: contactInfo.phone,
+               schoolId: body.schoolId 
+            }).returning({
+                id: tokenInfoTable.id
+            })        
+
+        const userToken = await token.sign({ 
+            tokenId: tokenInfoId.id, 
+            jti: randomBytes(32).toString("hex"),
+            exp: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour expiry
+        });
+
+        // select bulk sms name
+        const [sender] = await db.select({
+            bulkSMSName: schoolTable.bulkSMSName 
+        }).from(schoolTable)
+        .where(eq(schoolTable.id, body.schoolId))
+
+        if (!sender.bulkSMSName){
+            set.status = "Bad Request";
+            return {
+                success: false,
+                message: "For sending SMS, Sender name of school should be valid"
+            }
+        }
+
+        // better to use the queue like bullmq in VPS
+        const isSent = await sendOTPSMS({
+            phoneArray: [contactInfo.phone],
+            sender: sender.bulkSMSName,
+            message:  `You’ve been added to HCA portal. Click below to activate your account and set your password.
+👇 Activate Account with link below within 1 hour.
+            ${links.clientLink}/initiate-account/?token=${userToken}`,
+            set
+        });
+
+        // provide a fallback option to send via email
+        if (!isSent.success){
+            const sendMail = await sendEmail({
+                fromName: "SkuliPro",
+                subject: "initiate-account",
+                message: `You’ve been added to HCA portal. Click below to activate your account and set your password.                
+                👇 Activate Account with link below within 1 hour.
+            ${links.clientLink}/initiate-account/?token=${userToken}`,
+                title: "Activate Account",
+                user: [contactInfo.email]
+            })
+
+            return {
+                success: sendMail.success,
+                message: sendMail.success ? "The activation link has been sent via email. SMS delivery is currently unavailable." : sendMail.message
+            }
+        }
+        return isSent;
+    }, {
+        body: linkValidations.createUser,
+        beforeHandle({ body, set }){
+            body.schoolId = xss(body.schoolId).trim();
+        }
+    })
+    .post("/:role", async ({ params, set, body, token, isRateLimited  }) => {
+        if(!isRateLimited){
+            set.status = "Too Many Requests";
+            return {
+                success: false,
+                message: "Too many requests, try after an hour"
+            }
+        }
+        // validate the role 
+        const isRole = allowedRoles.has(params.role as Roles)
+        
+        if (!isRole) {
+            set.status = "Bad Request";
+            return {
+                success: false,
+                message: "The Role requested is invalid"
+            }
+        }
+        // get phone and email from schoolId
+        const [contactInfo] = await db.select({
+            phone: schoolTable.phone,
+            email: schoolTable.email
+        }).from(schoolTable).where(eq(schoolTable.id, body.schoolId));
+
+        const [tokenInfoId] = await db.insert(tokenInfoTable)
+            .values({
+               role: "school-admin",
+               email: contactInfo.email,
+               phone: contactInfo.phone,
+               schoolId: body.schoolId 
+            }).returning({
+                id: tokenInfoTable.id
+            });
+
+        const userToken = await token.sign({ 
+            tokenId: tokenInfoId.id, 
+            jti: randomBytes(32).toString("hex"),
+            exp: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour expiry
+        });
+
+
+        // select bulk sms name
+        const [sender] = await db.select({
+            bulkSMSName: schoolTable.bulkSMSName 
+        }).from(schoolTable)
+        .where(eq(schoolTable.id, body.schoolId))
+
+        if (!sender.bulkSMSName){
+            set.status = "Bad Request";
+            return {
+                success: false,
+                message: "For sending SMS, Sender name of school should be valid"
+            }
+        }
+
+        return await sendOTPSMS({
+            phoneArray: [contactInfo.phone],
+            sender: sender.bulkSMSName,
+            message:  `You’ve been added to HCA portal. Click below to activate your account and set your password.
+👇 Activate Account with link below within 1 hour.
+            ${links.clientLink}/activate/?token=${userToken}`,
+            set
+        });
+    }, {
+        body: linkValidations.createUser,
+        beforeHandle({ body, set }){
+            body.schoolId = xss(body.schoolId).trim();
+        },
+        afterHandle(){
+            // save the audit logs who invited whom when and schoolId
+            // you can send to queue for scaling
+        }
+    })
