@@ -3,6 +3,7 @@ export type Roles =
     | 'school-admin' // second master
     | 'principal' // head master 
     | 'bursar' 
+    | 'student'
     | 'dorm-master' // highest rank for dormitories he-she creates patrons and matrons
     | 'transport-officer' 
     | 'driver' 
@@ -38,6 +39,7 @@ export const allowedRoles = new Set<Roles>([
     'dorm-master',              // Highest rank for dormitories
     'transport-officer',
     'driver',
+    'student',
     'store-keeper',             // Manages hardwares, supplies, and building checks
     'class-teacher',
     'academic-master',

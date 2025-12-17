@@ -14,5 +14,7 @@ export interface loginReturn extends mainLoginType {
     data: { 
         phone: string;
         userId: string;
+        bulkSMS: string;
+        email: string;
     }
 }

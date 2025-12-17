@@ -110,9 +110,11 @@ export const sendOTPSMS = async ({ phoneArray, message, set, sender } : { phoneA
         }
 
         const result: NextSMS = await response.json();
+        
+        // console.dir(result, { depth: null, colors: true });
 
         // loop all messages of result object
-        const rejected = result.messages.find(msg => msg.status.groupName !== "DELIVERED");
+        const rejected = result.messages.find(msg => msg.status.groupName === "REJECTED");
         if (rejected) {
             set.status = "Bad Request";
             return {

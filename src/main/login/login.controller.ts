@@ -1,14 +1,15 @@
 import { eq } from "drizzle-orm";
 import { db } from "../../connections/drizzle.conn";
 import { sendOTPSMS } from "../../func/nextsms.func";
-import { generateOTP, getOTPData, isSessionExist, verifyOTP } from "../../func/otp.func";
+import { generateOTP, getOTPData, isSessionExist, Return, verifyOTP } from "../../func/otp.func";
 import { userProfilesTable } from "../../schema/core.schema";
 import { Set } from "../../types/type";
 import { loginDatabase } from "./login.db";
 import { loginBody } from "./login.types";
+import { sendEmail } from "../../config/email.config";
 
 export const loginController = {
-    login: async ({ body , set }: { body: loginBody; set: Set }) => {
+    login: async ({ body , set }: { body: loginBody; set: Set }): Promise<Return & { data: {sessionId: string; OTP: string }}> => {
         // check if session exist (this logic needs re-checking ..)
         const isExist = await isSessionExist(body.sessionId);
         if (isExist) {
@@ -16,8 +17,10 @@ export const loginController = {
             return {
                 success: false,
                 message: "Session already exist",
-                sessionId: body.sessionId,
-                OTP: "",
+                data: { 
+                    sessionId: body.sessionId,
+                    OTP: ""
+                }
             }
         }
         // 2FA (password + OTP)
@@ -25,21 +28,51 @@ export const loginController = {
         if (!verifyUser.success) return {
             success: false,
             message: verifyUser.message,
-            sessionId: "",
-            OTP: ""
+            data: {
+                sessionId: '',
+                OTP: ''
+            }
         };
         // otp
         const OTP = await generateOTP({ userId: verifyUser.data.userId });
-        console.log("phone: ", verifyUser.data.phone);
-        console.log("OTP: ", OTP)
 
-        // const sendOTP = await sendOTPSMS({ 
-        //     phoneArray: [verifyUser.data.phone],
-        //     message: `Your verification code for HCA is ${OTP}. valid for 5 minutes. Do not share it with anyone.`,
-        //     set
-        // })
+        // better to use the queue like bullmq in VPS
+        const isSent = await sendOTPSMS({
+            phoneArray: [verifyUser.data.phone],
+            sender: verifyUser.data.bulkSMS,
+            message: `Your verification code for ${verifyUser.data.bulkSMS} is ${OTP.OTP}. valid for 5 minutes. Do not share it with anyone.`,
+            set
+        });
 
-        return OTP;
+        const { sessionId, OTP: code } = OTP;
+        
+        // provide a fallback option to send via email
+        if (!isSent.success){
+            const sendMail = await sendEmail({
+                fromName: "SkuliPro",
+                subject: "verify OTP",
+                message: `Your verification code for ${verifyUser.data.bulkSMS} is ${OTP.OTP}. valid for 5 minutes. Do not share it with anyone.`,
+                title: "OTP Verification",
+                user: [verifyUser.data.email]
+            })
+
+            return {
+                ...sendMail,
+                message: sendMail.success ? "We have sent OTP via email. SMS delivery is currently unavailable." : sendMail.message,
+                data: {
+                    sessionId,
+                    OTP: code
+                }
+            }
+        }
+        return {
+            ...isSent,
+            data: {
+                sessionId,
+                OTP: code
+            }
+        };
+
     },
     verifyOTP: async ({ body, set }: { set: Set, body: { sessionId: string, otpInput: string } }) => {
         try {

@@ -3,12 +3,13 @@ import { LoginValidators } from "./login.valid";
 import xss from "xss";
 import { loginController } from "./login.controller";
 import { jwtPlugin } from "../../plugins/global.plugin";
-import { getOTPData, isSessionExist } from "../../func/otp.func";
+import { getOTPData, isSessionExist, Return } from "../../func/otp.func";
 import { redis } from "bun";
 import { RateLimitLogin } from "../../security/ratelimit.sec";
 import { db } from "../../connections/drizzle.conn";
-import { rolesTable, schoolTable, userRolesTable } from "../../schema/core.schema";
+import { rolesTable, schoolTable, userRolesTable, usersTable } from "../../schema/core.schema";
 import { and, eq } from "drizzle-orm";
+import { Roles } from "../../const/roles.const";
 
 export const LoginPlugin = new Elysia({ name: "Login API" })
     .use(jwtPlugin)
@@ -36,19 +37,23 @@ export const LoginPlugin = new Elysia({ name: "Login API" })
             body.sessionId = xss(body.sessionId).trim()
         }
     })
-    .post("/verify-OTP", async ({ body, set, jwt }) => {
+    .post("/verify-OTP", async ({ body, set, jwt }): Promise<Return & {data: {authToken: string; rolesArray?: Roles[]; username?: string;}}> => {
         const verifyResult = await loginController.verifyOTP({ body, set });
 
         if (!verifyResult.success) return {
             success: false,
             message: verifyResult.message,
-            authToken: ""
+            data: { authToken: ""}
         }
 
         // issue a jwt.
         const userId = await getOTPData({ sessionId: body.sessionId });
 
-        console.log("USER_ID: ", userId)
+        console.log("USER_ID: ", userId);
+        // get username
+        const [username] = await db.select({
+            name: usersTable.username
+        }).from(usersTable).where(eq(usersTable.id, userId))
 
         // get roles in form of array
         const rolesArray = await db
@@ -63,16 +68,17 @@ export const LoginPlugin = new Elysia({ name: "Login API" })
             )
         .then(r => r.map(a => a.role));
 
-        console.log("roles: ", rolesArray)
-
 
         const authToken = await jwt.sign ({ userId, rolesArray });
         
         return {
             success: true,
             message: "You have successfully logged in",
-            authToken,
-            rolesArray,
+            data: {
+                authToken,
+                rolesArray,
+                username: username.name
+            }
         }
     }, {
         body: LoginValidators.verifyOTP,

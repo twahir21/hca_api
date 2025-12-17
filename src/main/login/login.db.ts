@@ -3,7 +3,7 @@ import { db } from "../../connections/drizzle.conn";
 import { Set } from "../../types/type";
 import { loginBody, loginReturn } from "./login.types"
 import { hash, isMatch } from "../../security/pswd.sec";
-import { userProfilesTable, usersTable } from "../../schema/core.schema";
+import { schoolTable, userProfilesTable, userRolesTable, usersTable } from "../../schema/core.schema";
 
 export const loginDatabase = {
     login: async ({ body, set }: { body: loginBody ; set: Set }): Promise<loginReturn> => {
@@ -14,10 +14,9 @@ export const loginDatabase = {
                 .select()
                 .from(usersTable)
                 .leftJoin(userProfilesTable, eq(usersTable.id, userProfilesTable.userId))
+                .leftJoin(userRolesTable, eq(usersTable.id, userRolesTable.userId))
+                .leftJoin(schoolTable, eq(schoolTable.id, userRolesTable.schoolId))
                 .where(eq(usersTable.username, body.username));
-
-            console.log("Body received: ", body);
-            console.log("Data extracted: ", data)
 
             // 2. if data is not found, return error
             if (!data) {
@@ -25,7 +24,7 @@ export const loginDatabase = {
                 return {
                     success: false,
                     message: "Invalid credentials",
-                    data: { phone: "", userId: "" }
+                    data: { phone: "", userId: "", bulkSMS: '', email: '' }
                 }
             }
 
@@ -38,7 +37,7 @@ export const loginDatabase = {
                 return {
                     success: false,
                     message: "Invalid credentials",
-                    data: { phone: "", userId: "" }
+                    data: { phone: "", userId: "", bulkSMS: '', email: '' }
 
                 }
             }
@@ -47,7 +46,12 @@ export const loginDatabase = {
             return {
                 success: true,
                 message: "Login successful",
-                data: { phone: data.user_profiles?.phone ?? "", userId: data.users.id }
+                data: { 
+                    phone: data.user_profiles?.phone ?? "", 
+                    userId: data.users.id,
+                    bulkSMS: data.school?.bulkSMSName ?? "",
+                    email: data.user_profiles?.email ?? ''
+                }
             }
         } catch (error) {
             set.status = "Internal Server Error";
@@ -56,7 +60,7 @@ export const loginDatabase = {
                 message: error instanceof Error ?
                             error.message :
                             "Something went wrong in login",
-                data: { phone: "", userId: "" }
+                data: { phone: "", userId: "", bulkSMS: '', email: '' }
 
             }
         }

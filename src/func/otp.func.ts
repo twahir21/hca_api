@@ -12,7 +12,7 @@ const OTP_RATE_LIMIT = 30; // seconds between generation
 
 const hashOTP = (otp: string) => { return  createHash("sha256").update(otp).digest("hex"); };
 
-type Return = {
+export type Return = {
     success: boolean;
     message: string;
 }
