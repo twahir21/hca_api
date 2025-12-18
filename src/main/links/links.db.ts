@@ -1,4 +1,4 @@
-import { eq, or } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 import { db } from "../../connections/drizzle.conn";
 import { rolesTable, schoolTable, tokenInfoTable, userProfilesTable, userRolesTable, userSchoolsTable, usersTable } from "../../schema/core.schema";
 import { Set } from "../../types/type";
@@ -58,15 +58,23 @@ export const linkDatabases = {
             const { username, password, dob, fullName, address, gender } = body;
             const { role, schoolId, email, phone } = infoData;
             
-
+            // 1. Check if role exists for this school
+            const [existingRole] = await db
+                .select({ id: rolesTable.id })
+                .from(rolesTable)
+                .where(
+                    eq(rolesTable.role, role),
+                )
+            
+            // 2. if not exists is invalid
+            if(!existingRole){
+                set.status = "Conflict";
+                return {
+                    success: false,
+                    message: "Role submitted is invalid"
+                }
+            }
             await db.transaction(async tx => {
-                // 2. Save the user Role
-                const [roleId] = await tx.insert(rolesTable).values({
-                    role, schoolId
-                }).returning({
-                    id: rolesTable.id
-                })
-
                 // 3. save the user
                 const [users] = await tx.insert(usersTable)
                     .values({
@@ -86,8 +94,9 @@ export const linkDatabases = {
                 // 5. save the user - role relation
                 await tx.insert(userRolesTable).values({
                     userId: users.id,
-                    roleId: roleId.id,
-                    schoolId
+                    roleId: existingRole.id,
+                    schoolId,
+                    isDefaultRole: true,
                 })
 
                 // 6. update the school state to be active

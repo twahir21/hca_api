@@ -37,7 +37,7 @@ export const LoginPlugin = new Elysia({ name: "Login API" })
             body.sessionId = xss(body.sessionId).trim()
         }
     })
-    .post("/verify-OTP", async ({ body, set, jwt }): Promise<Return & {data: {authToken: string; rolesArray?: Roles[]; username?: string;}}> => {
+    .post("/verify-OTP", async ({ body, set, jwt }): Promise<Return & {data: {authToken: string; rolesArray?: Roles[]; username?: string; defaultRole?: Roles}}> => {
         const verifyResult = await loginController.verifyOTP({ body, set });
 
         if (!verifyResult.success) return {
@@ -53,11 +53,11 @@ export const LoginPlugin = new Elysia({ name: "Login API" })
         // get username
         const [username] = await db.select({
             name: usersTable.username
-        }).from(usersTable).where(eq(usersTable.id, userId))
+        }).from(usersTable).where(eq(usersTable.id, userId));
 
         // get roles in form of array
-        const rolesArray = await db
-            .select({ role: rolesTable.role })
+        const rolesWithDefault = await db
+            .select({ role: rolesTable.role, isDefault: userRolesTable.isDefaultRole })
             .from(rolesTable)
             .leftJoin(
                 userRolesTable,
@@ -66,8 +66,12 @@ export const LoginPlugin = new Elysia({ name: "Login API" })
             .where(
                 eq(userRolesTable.userId, userId),
             )
-        .then(r => r.map(a => a.role));
 
+        // rolesArray = all role names
+        const rolesArray = rolesWithDefault.map(r => r.role);
+
+        // defaultRole = the role name where isDefault is true
+        const defaultRole = rolesWithDefault.find(r => r.isDefault)?.role ?? undefined;
 
         const authToken = await jwt.sign ({ userId, rolesArray });
         
@@ -77,7 +81,8 @@ export const LoginPlugin = new Elysia({ name: "Login API" })
             data: {
                 authToken,
                 rolesArray,
-                username: username.name
+                username: username.name,
+                defaultRole
             }
         }
     }, {

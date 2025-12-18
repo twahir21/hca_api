@@ -91,11 +91,8 @@ export const rolesTable = pgTable("roles", {
     role: roleEnums("role").notNull(),
     description: text("description"),
     rank: integer("rank"),
-    schoolId: uuid("school_id").references(() => schoolTable.id, { onDelete: "cascade" }).notNull(),
-}, t => ({
-        schoolIndx: index("idx_roles_school").on(t.schoolId) // fetch per school
-    }) // role are per schools only
-); // i will prepare sheet of rank -> role -> description (hard-coded set of permissions)
+    createdAt: timestamp("created_at").defaultNow()
+}); // i will prepare sheet of rank -> role -> description (hard-coded set of permissions)
 
 
 
@@ -122,17 +119,15 @@ export const usersTable = pgTable("users", {
 export const userProfilesTable = pgTable("user_profiles", {
   id: uuid("id").defaultRandom().primaryKey(),
   fullName: text("full_name").notNull(),
-  phone: text("phone").notNull(),
-  email: text("email").notNull(),
+  phone: text("phone").notNull().unique(),
+  email: text("email").notNull().unique(),
   address: text("address"),
   gender: genderEnums("gender"),
   dob: timestamp("dob"),
   userId: uuid("profile_id").notNull().unique().references(() => usersTable.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
-}, t => ({
-  uniquePhoneEmail: unique().on(t.phone, t.email), // enforce unique phone globally
-}));
+});
 
 
 
@@ -142,13 +137,12 @@ export const userProfilesTable = pgTable("user_profiles", {
 export const userRolesTable = pgTable("user_role", {
     userId: uuid("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
     roleId: uuid("role_id").notNull().references(() => rolesTable.id, { onDelete: "cascade" }),
-    schoolId: uuid("school_id").notNull().references(() => schoolTable.id, { onDelete: "cascade" }),
+    isDefaultRole: boolean("is_default").default(false).notNull(),
+    schoolId: uuid("school_id").references(() => schoolTable.id, { onDelete: "cascade" }),
 }, t => ({
-      pk: primaryKey({ columns: [t.roleId, t.userId, t.schoolId ], name: "pk_user_role"}),
-      schoolUserRoleOnlyIndx: index("idx_school_user_role_only").on(t.schoolId),
-      schoolUserIdRoleIndx: index("idx_school_user_role").on(t.userId, t.schoolId) // first is given priority if one is to be used
-    })
-)
+  uniqueUserRoleScope: unique("uniq_user_role_scope").on(t.userId, t.roleId, t.schoolId),
+  idxUserSchool: index("idx_user_role_user_school").on(t.userId, t.schoolId),
+}));
 
 // ────────────────────────────────────────────────
 // 5. USER-SCHOOOLS TABLE ( many-to-many relation)
@@ -192,7 +186,7 @@ export const ClassTable = pgTable("classes", {
     schoolId: uuid("school_id").notNull().references(() => schoolTable.id, { onDelete: "cascade" }),
     createdAt: timestamp("created_at").defaultNow(),
     // LevelID can be null since not all schools have multiple levels e.g. nursery & primary
-    levelId: uuid("level_id").references(() => levelsTables.id, { onDelete: "cascade" }), 
+    levelId: uuid("level_id").references(() => levelsTables.id, { onDelete: "set null" }), 
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
     createdBy: uuid("created_by").references(() => usersTable.id, { onDelete: "set null" }),
     updatedBy: uuid("updated_by").references(() => usersTable.id, { onDelete: "set null" }),

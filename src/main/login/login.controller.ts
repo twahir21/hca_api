@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { db } from "../../connections/drizzle.conn";
 import { sendOTPSMS } from "../../func/nextsms.func";
 import { generateOTP, getOTPData, isSessionExist, Return, verifyOTP } from "../../func/otp.func";
-import { userProfilesTable } from "../../schema/core.schema";
+import { schoolTable, userProfilesTable, userSchoolsTable } from "../../schema/core.schema";
 import { Set } from "../../types/type";
 import { loginDatabase } from "./login.db";
 import { loginBody } from "./login.types";
@@ -87,40 +87,82 @@ export const loginController = {
             }
         }
     },
-    resendOTP: async ({ body, set }: { set: Set, body: { sessionId: string } }) => {
+    resendOTP: async ({ body, set }: { set: Set, body: { sessionId: string } }): Promise<Return & { data: {sessionId: string; OTP: string; }}> => {
         try {
             const userId = await getOTPData({ sessionId: body.sessionId });
 
-            // get phone number using userId
-            const [phoneNumber] = await db.select({
-                phone: userProfilesTable.phone
-            }).from(userProfilesTable)
-            .where(eq(userProfilesTable.userId, userId));
-
-            if (!phoneNumber.phone|| phoneNumber.phone.length === 0) {
-                set.status = "Bad Request";
+            if(!userId){
                 return {
                     success: false,
-                    message: "You have exceeded 5 minutes, please login again"
+                    message: "Please clear your cookies and login again",
+                    data: {
+                        sessionId: "",
+                        OTP: ""
+                    }
                 }
             }
 
-            const OTP = generateOTP({ userId });
+            // get phone number using userId
+            const [contactInfo] = await db.select({
+                phone: userProfilesTable.phone,
+                email: userProfilesTable.email
+            }).from(userProfilesTable)
+            .where(eq(userProfilesTable.userId, userId));
 
-            // return await sendOTPSMS({
-            //     phoneArray: [phoneNumber.phone],
-            //     message: `Your verification code for HCA is ${OTP}. valid for 5 minutes. Do not share it with anyone.`,
-            //     set
-            // });
 
-            return OTP;
+            const [bulk] = await db.select({
+                name: schoolTable.bulkSMSName
+            }).from(userSchoolsTable)
+            .leftJoin(schoolTable, eq(schoolTable.id, userSchoolsTable.schoolId))
+            .where(eq(userSchoolsTable.userId, userId))
+            .then(m => m.map(a => a.name))
+
+            const OTP = await generateOTP({ userId });
+
+            // better to use the queue like bullmq in VPS
+            const isSent = await sendOTPSMS({
+                phoneArray: [contactInfo.phone],
+                sender: bulk ?? "",
+                message: `Your verification code for ${bulk ?? ""} is ${OTP.OTP}. valid for 5 minutes. Do not share it with anyone.`,
+                set
+            });
+
+            const { sessionId, OTP: code } = OTP;
+        
+            // provide a fallback option to send via email
+            if (!isSent.success){
+                const sendMail = await sendEmail({
+                    fromName: "SkuliPro",
+                    subject: "verify OTP",
+                    message: `Your verification code for ${bulk ?? ""} is ${OTP.OTP}. valid for 5 minutes. Do not share it with anyone.`,
+                    title: "OTP Verification",
+                    user: [contactInfo.email]
+                })
+
+                return {
+                    ...sendMail,
+                    message: sendMail.success ? "We have sent OTP via email. SMS delivery is currently unavailable." : sendMail.message,
+                    data: {
+                        sessionId,
+                        OTP: code
+                    }
+                }
+            }
+            return {
+                ...isSent,
+                data: {
+                    sessionId,
+                    OTP: code
+                }
+            };
         } catch (error) {
             set.status = "Internal Server Error";
             return {
                 success: false,
                 message: error instanceof Error ? 
                             error.message :
-                            "Something went wrong in resending OTP"
+                            "Something went wrong in resending OTP",
+                data: { sessionId: "", OTP: ""}
             }
         }
     }

@@ -1,0 +1,1 @@
+ALTER TABLE "user_role" ALTER COLUMN "school_id" DROP NOT NULL;

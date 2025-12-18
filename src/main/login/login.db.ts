@@ -8,7 +8,37 @@ import { schoolTable, userProfilesTable, userRolesTable, usersTable } from "../.
 export const loginDatabase = {
     login: async ({ body, set }: { body: loginBody ; set: Set }): Promise<loginReturn> => {
         try {
-            // await db.insert(usersTable).values({ username: "admin", password: await hash("hca@2026"), phone: "255674291587" });
+            // 0. check if super-admin
+            const [isSuperAdmin] = await db.select()
+                .from(usersTable)
+                .where(eq(usersTable.username, body.username))
+                .leftJoin(userProfilesTable, eq(usersTable.id, userProfilesTable.userId));
+            
+            if (body.username === process.env.ADMIN_USERNAME!){
+                const isPasswordMatch = await isMatch({ password: body.password, hash: isSuperAdmin.users.passwordHash });
+                if (!isPasswordMatch) {
+                    set.status = "Bad Request";
+                    return {
+                        success: false,
+                        message: "Invalid credentials",
+                        data: { phone: "", userId: "", bulkSMS: '', email: '' }
+
+                    }
+                }
+                console.log("isPassword match: ", isPasswordMatch)
+                set.status = "OK";
+                return {
+                success: true,
+                message: "Login successful",
+                    data: { 
+                        phone: isSuperAdmin.user_profiles?.phone ?? "", 
+                        userId: isSuperAdmin.users.id,
+                        bulkSMS: process.env.ADMIN_BULKSMS!,
+                        email: isSuperAdmin.user_profiles?.email ?? ''
+                    }                    
+                }
+            }
+
             // 1. fetch data using username
             const [data] = await db
                 .select()
