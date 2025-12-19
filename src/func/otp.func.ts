@@ -110,6 +110,7 @@ export const verifyOTP = async ({ otpInput, sessionId }: { sessionId: string, ot
     }
 
     await redis.del(`otp_attempts:${sessionId}`);
+    await redis.del(`otp:session:${sessionId}`);
 
     return {
         success: true,

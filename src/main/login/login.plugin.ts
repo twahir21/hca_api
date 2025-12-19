@@ -49,7 +49,6 @@ export const LoginPlugin = new Elysia({ name: "Login API" })
         // issue a jwt.
         const userId = await getOTPData({ sessionId: body.sessionId });
 
-        console.log("USER_ID: ", userId);
         // get username
         const [username] = await db.select({
             name: usersTable.username
