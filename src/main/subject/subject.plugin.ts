@@ -6,46 +6,40 @@ import { verifyJWT } from "../../plugins/global.plugin";
 
 export const SubjectPlugin = new Elysia ({ prefix: "/subjects"})
     .use(verifyJWT)
+    
+    // ===========================================
+    // === School Admins only ===
+    // ===========================================
     .guard({
-        beforeHandle({ role, userId, set }) {
-            if (!userId) {
-                set.status = "Unauthorized";
+        beforeHandle({ selectedRole, set }) {
+            if(selectedRole !== "school-admin") {
+                set.status = "Forbidden";
                 return {
                     success: false,
-                    message: "No or invalid token"
+                    message: "Only School Admins can use this resource."
                 }
             }
         }
-    })    
+    })
     // ==============================================
     // === get subjects per a teacher from userId ===
     // ==============================================
     .get("/subject-per-teacher", "you found!")
 
-    // ===========================================
-    // === Admins only ===
-    // ===========================================
-    .guard({
-        beforeHandle({ role, set }) {
-            if (role !== 'admin') {
-                set.status = "Non-Authoritative Information";
-                return {
-                    success: false,
-                    message: "This resource is only for Admins."
-                }
-            }
-        }
-    })
-    .post("/create-subject", async ({ set, body }) => {
-        return await subjectDatabase.createSubject({ set, body });
+    .post("/create-subject", async ({ set, body, schoolId, userId }) => {
+        if (!schoolId || !userId) return { success: false, message: "JWT key information failed to be decoded"}
+
+        return await subjectDatabase.createSubject({ set, body, userId, schoolId });
     }, {
         body: subjectValidators.createSubject,
         beforeHandle({ body }) {
             body.name = xss(body.name).trim().toLowerCase().split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
         }
     })
-    .put("/update-subject", async ({ set, body }) => {
-        return await subjectDatabase.updateSubject({ set, body });
+    .put("/update-subject", async ({ set, body, userId, schoolId }) => {
+        if (!schoolId || !userId) return { success: false, message: "JWT key information failed to be decoded"}
+
+        return await subjectDatabase.updateSubject({ set, body, schoolId, userId });
     }, {
         body: subjectValidators.updateSubject,
         beforeHandle({ body }) {
@@ -61,14 +55,8 @@ export const SubjectPlugin = new Elysia ({ prefix: "/subjects"})
             query.limit = xss(query.limit).trim();
         }
     })
-    .get("/get-all-subjects", async ({ set, query }) => {
-        return await subjectDatabase.getAllSubjects({ set });
-    })
     .delete("/delete-subject", async ({ set, body }) => {
         return await subjectDatabase.deleteSubject({ set, body });
     }, {
         body: subjectValidators.deleteSubject
-    })
-    .get("total-subjects", async ({ set }) => {
-        return await subjectDatabase.totalSubjects({ set });
     })

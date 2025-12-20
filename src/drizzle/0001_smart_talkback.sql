@@ -1,0 +1,1 @@
+CREATE TYPE "public"."level" AS ENUM('pre-primary', 'primary', 'O-level', 'A-level', 'higher-education');

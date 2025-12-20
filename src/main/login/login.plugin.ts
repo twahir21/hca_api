@@ -3,12 +3,12 @@ import { LoginValidators } from "./login.valid";
 import xss from "xss";
 import { loginController } from "./login.controller";
 import { jwtPlugin } from "../../plugins/global.plugin";
-import { getOTPData, isSessionExist, Return } from "../../func/otp.func";
+import { getOTPData, Return } from "../../func/otp.func";
 import { redis } from "bun";
 import { RateLimitLogin } from "../../security/ratelimit.sec";
 import { db } from "../../connections/drizzle.conn";
-import { rolesTable, schoolTable, userRolesTable, usersTable } from "../../schema/core.schema";
-import { and, eq } from "drizzle-orm";
+import { rolesTable, userRolesTable, usersTable } from "../../schema/core.schema";
+import { eq } from "drizzle-orm";
 import { Roles } from "../../const/roles.const";
 
 export const LoginPlugin = new Elysia({ name: "Login API" })
@@ -40,6 +40,8 @@ export const LoginPlugin = new Elysia({ name: "Login API" })
     .post("/verify-OTP", async ({ body, set, jwt }): Promise<Return & {data: {authToken: string; rolesArray?: Roles[]; username?: string; defaultRole?: Roles}}> => {
         const verifyResult = await loginController.verifyOTP({ body, set });
 
+        console.log("verifyResult: ", verifyResult)
+
         if (!verifyResult.success) return {
             success: false,
             message: verifyResult.message,
@@ -49,10 +51,25 @@ export const LoginPlugin = new Elysia({ name: "Login API" })
         // issue a jwt.
         const userId = await getOTPData({ sessionId: body.sessionId });
 
+        console.log("userId: ", userId);
+
+        if (!userId) {
+            set.status = "Conflict";
+            return {
+                success: false,
+                message: "Failed to retrieve your ID, contact admin for more information",
+                data: { authToken: ""}
+            }
+        }
+ 
         // get username
         const [username] = await db.select({
             name: usersTable.username
         }).from(usersTable).where(eq(usersTable.id, userId));
+
+        // get schoolId
+        const [schoolID] = await db.select({ id: userRolesTable.schoolId })
+            .from(userRolesTable).where(eq(userRolesTable.userId, userId))
 
         // get roles in form of array
         const rolesWithDefault = await db
@@ -72,7 +89,7 @@ export const LoginPlugin = new Elysia({ name: "Login API" })
         // defaultRole = the role name where isDefault is true
         const defaultRole = rolesWithDefault.find(r => r.isDefault)?.role ?? undefined;
 
-        const authToken = await jwt.sign ({ userId, rolesArray });
+        const authToken = await jwt.sign ({ userId, rolesArray, schoolId: schoolID.id, selectedRole: defaultRole });
         
         return {
             success: true,

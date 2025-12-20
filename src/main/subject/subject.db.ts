@@ -1,23 +1,23 @@
 import { asc, count, eq, like, or } from "drizzle-orm";
 import { db } from "../../connections/drizzle.conn";
 import { Set } from "../../types/type"
-import { SubjectTable } from "../../schema/class.schema";
-import { baseSubjectReturn, getSubjects, totalSubjects } from "./subject.types";
+import { baseSubjectReturn, getSubjects } from "./subject.types";
+import { SubjectTable } from "../../schema/academic.schema";
 
 
 
 export const subjectDatabase = {
-    createSubject: async ({ set, body } : { set: Set; body: { name: string }}): Promise<baseSubjectReturn> => {
+    createSubject: async ({ set, body, userId, schoolId } : { set: Set; userId: string; schoolId: string; body: { name: string }}): Promise<baseSubjectReturn> => {
         try {
             const { name } = body;
 
             // 1. check if name exist
-            const isSubjectExist = await db
-                                    .select()
+            const [isSubjectExist] = await db
+                                    .select({ id: SubjectTable.id })
                                     .from(SubjectTable)
                                     .where(eq(SubjectTable.name, name));
 
-            if(isSubjectExist.length > 0) {
+            if(isSubjectExist) {
                 set.status = "Conflict";
                 return {
                     success: false,
@@ -29,7 +29,9 @@ export const subjectDatabase = {
             await db
                 .insert(SubjectTable)
                 .values({
-                    name
+                    name,
+                    createdBy: userId,
+                    schoolId
                 });
 
             set.status = "OK"
@@ -47,17 +49,17 @@ export const subjectDatabase = {
             }
         }
     },
-    updateSubject: async ({ set, body } : { set: Set; body: { id: string; name: string }}): Promise<baseSubjectReturn> => {
+    updateSubject: async ({ set, body, userId, schoolId } : { set: Set; userId: string; schoolId: string; body: { id: string; name: string }}): Promise<baseSubjectReturn> => {
         try {
             const { id, name } = body;
 
             // 1. check if class exist
-            const isSubjectExist = await db
-                                    .select()
+            const [isSubjectExist] = await db
+                                    .select({ id: SubjectTable.id })
                                     .from(SubjectTable)
                                     .where(eq(SubjectTable.id, id));
 
-            if(isSubjectExist.length === 0) {
+            if(!isSubjectExist) {
                 set.status = "Not Found";
                 return {
                     success: false,
@@ -69,7 +71,9 @@ export const subjectDatabase = {
             await db
                 .update(SubjectTable)
                 .set({
-                    name
+                    name,
+                    schoolId,
+                    updatedBy: userId
                 })
                 .where(eq(SubjectTable.id, id));
 
@@ -102,66 +106,31 @@ export const subjectDatabase = {
                             eq(SubjectTable.name, search),           // strict name match
                         ): undefined; 
 
-            const subjects = await db
+            const data = await db
                                 .select()
                                 .from(SubjectTable)
                                 .where(whereClause)
                                 .limit(perPage)
                                 .offset(offset)
                                 .orderBy(asc(SubjectTable.name));
-                                
-            if (subjects.length === 0) {
-                set.status = "Not Found";
-                return {
-                    success: false,
-                    message: "No subject available",
-                    subjects: []
-                }
-            }
-            set.status = "OK";
-            return {
-                success: true,
-                message: "subjects fetched successfully",
-                subjects
-            };
-        } catch (error) {
-            set.status = "Internal Server Error";
-            return {
-                success: false,
-                subjects: [],
-                message: error instanceof Error ?
-                            error.message :
-                            "Something went wrong in fetching subjects"
-            }
-        }
-    },
-    getAllSubjects: async ({ set }: { set : Set }): Promise<getSubjects> => {
-        try {
 
-            const allSubjects = await db
-                                .select()
-                                .from(SubjectTable)
-                                .orderBy(asc(SubjectTable.name));
+            const [totalSubjects] = await db  
+                        .select({ count: count(SubjectTable)})
+                        .from(SubjectTable)
                                 
-            if (!allSubjects) {
-                set.status = "Not Found";
-                return {
-                    success: false,
-                    message: "No subject available",
-                    subjects: []
-                }
-            }
             set.status = "OK";
             return {
                 success: true,
                 message: "subjects fetched successfully",
-                subjects: allSubjects
+                data,
+                total: totalSubjects.count
             };
         } catch (error) {
             set.status = "Internal Server Error";
             return {
                 success: false,
-                subjects: [],
+                total: 0,
+                data: [],
                 message: error instanceof Error ?
                             error.message :
                             "Something went wrong in fetching subjects"
@@ -206,27 +175,4 @@ export const subjectDatabase = {
             }
         }
     },
-    totalSubjects: async ({ set }: { set: Set }): Promise<totalSubjects> => {
-        try {
-            const total = await db.select({
-                count: count()
-            }).from(SubjectTable).then(t => t[0].count);
-
-            set.status = "OK";
-            return {
-                success: true,
-                message: "Total subjects fetched successfully",
-                total
-            }
-        } catch (error) {
-            set.status = "Internal Server Error"
-            return {
-                success: false,
-                total: 0,
-                message: error instanceof Error ? 
-                            error.message : 
-                            "Something went wrong in getting total subjects"
-            }
-        }
-    }
 }

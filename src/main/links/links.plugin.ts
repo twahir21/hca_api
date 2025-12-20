@@ -1,7 +1,7 @@
 import Elysia from "elysia";
 import { linkValidations } from "./links.valid";
 import xss from "xss";
-import { linkToken } from "../../plugins/global.plugin";
+import { linkToken, verifyJWT } from "../../plugins/global.plugin";
 import { links } from "../../const/links.const";
 import { sendOTPSMS } from "../../func/nextsms.func";
 import { randomBytes } from "crypto";
@@ -16,6 +16,7 @@ import { RateLimitActivation } from "../../security/ratelimit.sec";
 
 export const linksPlugin = new Elysia({ prefix: "/links"})
     .use(linkToken)
+    .use(verifyJWT)
     // u must run sms or email under bg job or queue (BullMQ)
     // activate-account and verify token 
     .post("/initiate-account", async ({ body, set, token, query }) => {
@@ -158,8 +159,16 @@ export const linksPlugin = new Elysia({ prefix: "/links"})
         return isSent;
     }, {
         body: linkValidations.createUser,
-        beforeHandle({ body, set }){
+        beforeHandle({ body, selectedRole, set }){
             body.schoolId = xss(body.schoolId).trim();
+
+            if (selectedRole !== "super-admin") {
+                set.status = "Forbidden";
+                return {
+                    success: false,
+                    message: "Only Super Admin can access this resource"
+                }
+            }
         }
     })
     .post("/:role", async ({ params, set, body, token, isRateLimited  }) => {
@@ -227,8 +236,16 @@ export const linksPlugin = new Elysia({ prefix: "/links"})
         });
     }, {
         body: linkValidations.createUser,
-        beforeHandle({ body, set }){
+        beforeHandle({ body, set, selectedRole }){
             body.schoolId = xss(body.schoolId).trim();
+
+            if(selectedRole !== "school-admin") {
+                set.status= "Forbidden";
+                return {
+                    success: false,
+                    message: "Only School Admin can access this resource"
+                }
+            }
         },
         afterHandle(){
             // save the audit logs who invited whom when and schoolId

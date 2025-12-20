@@ -4,13 +4,14 @@ export type baseClassReturn = {
 }
 
 export interface getClasses extends baseClassReturn {
-    classes: {
+    data: {
         id: string;
         name: string;
-        createdAt: Date;
+        schoolId: string;
+        createdAt: Date | null;
+        levelId: string;
+        updatedAt: Date | null;
+        createdBy: string | null;
+        updatedBy: string | null;
     }[]
-}
-
-export interface totalClasses extends baseClassReturn {
-    total: number;
 }

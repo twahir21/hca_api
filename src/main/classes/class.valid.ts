@@ -16,7 +16,8 @@ export const classValidators = {
                     message: "Class name must be between 2-40 characters"
                 }
             }
-        })
+        }),
+        level: t.UnionEnum(["pre-primary", "primary", "O-level", "A-level", "higher-education"])
     }),
     updateClass: t.Object({
         id: t.String({
@@ -37,7 +38,9 @@ export const classValidators = {
                     message: "Class name must be between 2-40 characters"
                 }
             }
-        })
+        }),
+        level: t.UnionEnum(["pre-primary", "primary", "O-level", "A-level", "higher-education"])
+
     }), 
     deleteClass: t.Object({
         id: t.String({

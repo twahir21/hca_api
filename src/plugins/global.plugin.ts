@@ -29,19 +29,21 @@ export const verifyJWT = new Elysia()
             set.status = 'Unauthorized';
             return {
                 success: false,
-                message: "Invalid token"
+                message: "Invalid or expired token"
             }
         }
 
-        const { userId, rolesArray } = decoded as { userId: string; rolesArray: Roles[] };
-        console.log("Roles decoded: ", rolesArray);
+
+        const { userId, rolesArray, schoolId, selectedRole } = decoded as { userId: string; rolesArray: Roles[]; schoolId: string; selectedRole: Roles };
 
         const roleSet = new Set<Roles>(rolesArray);
 
         set.status = "Accepted";
         return {
             userId,
-            roleSet
+            roleSet,
+            schoolId,
+            selectedRole
         };
     })
 
@@ -49,7 +51,11 @@ export const verifyJWT = new Elysia()
 export const main = new Elysia()
     .use(verifyJWT)
     // ✅ Hi is now available
-    .get('/parent', ({ userId, roleSet }) => { return { userId, roleSet} })
+    .get('/parent', ({ userId, roleSet, schoolId, selectedRole }) => { 
+        if (!roleSet) return "roleSet is undefined!"
+        console.log(roleSet)
+        return { userId, roleSet, schoolId, selectedRole } 
+    })
     .get("/isAdmin", ({ set }) => {
         set.status = "OK"
         return {
@@ -76,24 +82,17 @@ export const main = new Elysia()
         }
     })
     .guard({
-        beforeHandle({ roleSet, userId, set }) {
-            if (!userId) {
-                set.status = "Unauthorized";
+        beforeHandle({ selectedRole, set }) {
+            if(selectedRole !== "super-admin") {
+                set.status = "Forbidden";
                 return {
                     success: false,
-                    message: "No or invalid token"
-                }
-            }
-            if (roleSet.has("school-admin")) {
-                set.status = "Non-Authoritative Information";
-                return {
-                    success: false,
-                    message: "this resource is only for admins"
+                    message: "Only School Admins can use this resource."
                 }
             }
         }
     })
-    .get("test-role", () => {
+    .get("/test-role", () => {
         return {
             success: true,
             message: "passed!"

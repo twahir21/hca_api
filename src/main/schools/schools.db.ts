@@ -2,7 +2,7 @@ import { and, asc, count, eq, like, or } from "drizzle-orm";
 import { db } from "../../connections/drizzle.conn";
 import { Set } from "../../types/type"
 import { baseSchoolReturn, getSchools, schoolBody, updateSchoolBody } from "./schools.types";
-import { schoolTable, userProfilesTable, userSchoolsTable, usersTable } from "../../schema/core.schema";
+import { rolesTable, schoolTable, userProfilesTable, userRolesTable, usersTable } from "../../schema/core.schema";
 
 
 export const schoolDatabase = {
@@ -58,10 +58,14 @@ export const schoolDatabase = {
                         status: "approved"
                     }).where(eq(schoolTable.id, schoolId.id));
 
+                    const [roleId] = await db.select({ id: rolesTable.id })
+                        .from(rolesTable).where(eq(rolesTable.role, "school-admin"))
+
                     // Save the user's school (for counting how many school this user has)
-                    await tx.insert(userSchoolsTable).values({
+                    await tx.insert(userRolesTable).values({
                         userId: isUserExist.userId,
-                        schoolId: schoolId.id
+                        schoolId: schoolId.id,
+                        roleId: roleId.id
                     })
                 }
 
@@ -216,10 +220,10 @@ export const schoolDatabase = {
                 }
             }
             const [schoolCount] = await db.select({
-                count: count(userSchoolsTable.schoolId)
+                count: count(userRolesTable.schoolId)
             })
-                .from(userSchoolsTable)
-                .where(eq(userSchoolsTable.userId, body.userId))
+                .from(userRolesTable)
+                .where(eq(userRolesTable.userId, body.userId))
             set.status = "OK";
             return {
                 success: true,

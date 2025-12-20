@@ -1,6 +1,6 @@
 import { and, eq, or } from "drizzle-orm";
 import { db } from "../../connections/drizzle.conn";
-import { rolesTable, schoolTable, tokenInfoTable, userProfilesTable, userRolesTable, userSchoolsTable, usersTable } from "../../schema/core.schema";
+import { rolesTable, schoolTable, tokenInfoTable, userProfilesTable, userRolesTable, usersTable } from "../../schema/core.schema";
 import { Set } from "../../types/type";
 import { baseLinkReturn, initiateAccountBody, sendTokenBody } from "./links.types";
 import { hash } from "../../security/pswd.sec";
@@ -91,7 +91,7 @@ export const linkDatabases = {
                 });
 
                 
-                // 5. save the user - role relation
+                // 5. save the user - role relation (also how many school user owns)
                 await tx.insert(userRolesTable).values({
                     userId: users.id,
                     roleId: existingRole.id,
@@ -103,12 +103,6 @@ export const linkDatabases = {
                 await tx.update(schoolTable).set({
                     status: "approved"
                 }).where(eq(schoolTable.id, schoolId));
-
-                // 7. save the user's school (for counting how many school this user has)
-                await tx.insert(userSchoolsTable).values({
-                    userId: users.id,
-                    schoolId
-                })
             });
 
             set.status = "OK";

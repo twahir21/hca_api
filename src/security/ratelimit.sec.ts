@@ -35,7 +35,7 @@ export const RateLimitLogin = new Elysia({ name: "rate-limit-login"})
             // Set expiration only on first attempt
             await redis.expire(key, cacheTime.ONE_HOUR)
         }
-        if (attempts > cacheCounts.FIVE) {
+        if (attempts > cacheCounts.FIFTEEN) {
             set.status = 429;
             set.headers['Retry-After'] = cacheTime.ONE_HOUR.toString()
             return { isRateLimited: false }

@@ -5,85 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1763304597707,
-      "tag": "0000_cooing_wrecker",
+      "when": 1766264604119,
+      "tag": "0000_cynical_logan",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1765782199168,
-      "tag": "0001_violet_blue_shield",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1765959160898,
-      "tag": "0002_lean_dormammu",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1766065570049,
-      "tag": "0003_neat_killer_shrike",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1766065708733,
-      "tag": "0004_huge_moondragon",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1766094439378,
-      "tag": "0005_far_the_fallen",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1766095021786,
-      "tag": "0006_tiresome_leo",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1766095050561,
-      "tag": "0007_ancient_blade",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1766095087243,
-      "tag": "0008_volatile_lady_deathstrike",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1766095129432,
-      "tag": "0009_cultured_lockjaw",
-      "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "7",
-      "when": 1766095387399,
-      "tag": "0010_hot_mimic",
-      "breakpoints": true
-    },
-    {
-      "idx": 11,
-      "version": "7",
-      "when": 1766095434082,
-      "tag": "0011_glorious_doctor_faustus",
+      "when": 1766264776932,
+      "tag": "0001_smart_talkback",
       "breakpoints": true
     }
   ]

@@ -6,6 +6,8 @@ import { db } from "../connections/drizzle.conn"
 import { rolesTable, userProfilesTable, userRolesTable, usersTable } from "../schema/core.schema"
 import { hash } from "../security/pswd.sec"
 import { ROLES } from "../const/roles.const"
+import { LEVELS } from "../const/levels.const"
+import { levelsTables } from "../schema/academic.schema"
 
 
 const superAdminSeed = async () => {
@@ -45,10 +47,15 @@ const superAdminSeed = async () => {
                 userId: userID.id
             })
 
-            // 3. insert all roles (no more manual work to /${role})
+            // 3. insert all roles (no more manual work to /${role}) and all levels
             await tx
                 .insert(rolesTable)
                 .values(ROLES.map(role => ({ role })))
+                .onConflictDoNothing();
+            
+            await tx
+                .insert(levelsTables)
+                .values(LEVELS.map(levels  => ({ levels })))
                 .onConflictDoNothing();
 
             const [superAdmin] = await tx.select({

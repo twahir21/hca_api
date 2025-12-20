@@ -6,46 +6,37 @@ import { verifyJWT } from "../../plugins/global.plugin";
 
 export const ClassPlugin = new Elysia ({ prefix: "/classes"})
     .use(verifyJWT)
-    .guard({
-        beforeHandle({ role, userId, set }) {
-            if (!userId) {
-                set.status = "Unauthorized";
-                return {
-                    success: false,
-                    message: "No or invalid token"
-                }
-            }
-        }
-    })  
-    // ==============================================
-    // === get classes per a teacher from userId ===
-    // ==============================================
-    .get("/class-per-teacher", "you found!")
-
+    
     // ===========================================
-    // === Admins only ===
+    // === School Admins only ===
     // ===========================================
     .guard({
-        beforeHandle({ role, set }) {
-            if (role !== 'admin') {
-                set.status = "Non-Authoritative Information";
+        beforeHandle({ selectedRole, set }) {
+            if(selectedRole !== "school-admin") {
+                set.status = "Forbidden";
                 return {
                     success: false,
-                    message: "This resource is only for Admins."
+                    message: "Only School Admins can use this resource."
                 }
             }
         }
     })
-    .post("/create-class", async ({ set, body }) => {
-        return await classDatabase.createClass({ set, body });
+    .get("/class-per-teacher", "you found!")
+    .post("/create-class", async ({ set, body, schoolId, userId }) => {
+
+        if (!schoolId || !userId) return { success: false, message: "JWT key information failed to be decoded"}
+
+        return await classDatabase.createClass({ set, body, schoolId, userId });
     }, {
         body: classValidators.createClass,
-        beforeHandle({ body }) {
+        beforeHandle({ body, userId }) {
             body.name = xss(body.name).trim().toLowerCase().split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
         }
     })
-    .put("/update-class", async ({ set, body }) => {
-        return await classDatabase.updateClass({ set, body });
+    .put("/update-class", async ({ set, body, schoolId, userId }) => {
+        if (!schoolId || !userId) return { success: false, message: "JWT key information failed to be decoded"}
+
+        return await classDatabase.updateClass({ set, body, userId, schoolId });
     }, {
         body: classValidators.updateClass,
         beforeHandle({ body }) {
@@ -57,9 +48,7 @@ export const ClassPlugin = new Elysia ({ prefix: "/classes"})
     }, {
         body: classValidators.deleteClass
     })
-    .get("total-classes", async ({ set }) => {
-        return await classDatabase.totalClasses({ set });
-    })
+
     .get("/get-classes", async ({ set, query }) => {
         return await classDatabase.getClasses({ set, currentPage: query.page ?? "1", limit: query.limit ?? "5", search: query.search ?? "" });
     }, {
@@ -68,8 +57,5 @@ export const ClassPlugin = new Elysia ({ prefix: "/classes"})
             query.page = xss(query.page).trim();
             query.limit = xss(query.limit).trim();
         }
-    })
-    .get("/get-all-classes", async ({ set }) => {
-        return await classDatabase.getAllClasses({ set });
     })
 

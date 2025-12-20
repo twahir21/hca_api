@@ -1,1 +1,0 @@
-ALTER TABLE "user_role" ADD COLUMN "is_default" boolean DEFAULT false NOT NULL;

@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { boolean, check, index, integer, pgEnum, pgTable, primaryKey, text, timestamp, unique, uuid, varchar } from "drizzle-orm/pg-core";
+import { ClassTable, SubjectTable } from "./academic.schema";
 
 // Feature,School Admin (school-admin role),Principal (principal role)
 // Primary Focus,"Operational Management (daily logistics, records, resources).","Instructional Leadership (academic quality, staff performance, school vision)."
@@ -143,95 +144,6 @@ export const userRolesTable = pgTable("user_role", {
   uniqueUserRoleScope: unique("uniq_user_role_scope").on(t.userId, t.roleId, t.schoolId),
   idxUserSchool: index("idx_user_role_user_school").on(t.userId, t.schoolId),
 }));
-
-// ────────────────────────────────────────────────
-// 5. USER-SCHOOOLS TABLE ( many-to-many relation)
-// ────────────────────────────────────────────────
-// For fetching all schools user owns
-export const userSchoolsTable = pgTable("user_school", {
-  userId: uuid("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
-  schoolId: uuid("school_id").notNull().references(() => schoolTable.id, { onDelete: "cascade" }),
-  joinedAt: timestamp("joined_at").defaultNow(),
-}, t => ({
-    pk: primaryKey({ columns: [t.userId, t.schoolId ]}), // no one user is allowed to insert to same school twice
-    schoolIdx: index("idx_user_schools_school").on(t.schoolId),
-    userIdx: index("idx_user_schools_user").on(t.userId)
-}));
-
-
-// ────────────────────────────────
-// 5. LEVELS TABLE
-// ────────────────────────────────
-export const levelsTables = pgTable("levels", {
-    id: uuid("id").defaultRandom().primaryKey(),
-    levels: text("levels").notNull(), // (e.g. Primary, pre-school, kg etc.)
-    schoolId: uuid("school_id").notNull().references(() => schoolTable.id, { onDelete: "cascade" }),
-    createdBy: uuid("created_by").references(() => usersTable.id, { onDelete: "set null" }),
-    updatedBy: uuid("updated_by").references(() => usersTable.id, { onDelete: "set null" }),
-
-}, t => ({
-      // levels must be unique per school not global
-      uniqueLevelsPerSchool: unique().on(t.levels, t.schoolId), // unique Levels per school
-      schoolIndx: index("idx_level_school").on(t.schoolId) // first is given priority if one is to be used
-    })
-)
-
-
-// ────────────────────────────────
-// 6. CLASSES TABLE
-// ────────────────────────────────
-export const ClassTable = pgTable("classes", {
-    id: uuid("id").defaultRandom().primaryKey(),
-    name: varchar("name", { length: 100 }).notNull(),
-    schoolId: uuid("school_id").notNull().references(() => schoolTable.id, { onDelete: "cascade" }),
-    createdAt: timestamp("created_at").defaultNow(),
-    // LevelID can be null since not all schools have multiple levels e.g. nursery & primary
-    levelId: uuid("level_id").references(() => levelsTables.id, { onDelete: "set null" }), 
-    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
-    createdBy: uuid("created_by").references(() => usersTable.id, { onDelete: "set null" }),
-    updatedBy: uuid("updated_by").references(() => usersTable.id, { onDelete: "set null" }),
-
-}, t => ({
-        uniqueNamePerSchool: unique().on(t.name, t.schoolId), // unique name per school
-        schoolIndx: index("idx_class_school").on(t.schoolId) 
-    })
-);
-
-
-// ────────────────────────────────
-// 7. SUBJECTS TABLE
-// ────────────────────────────────
-export const SubjectTable = pgTable("subjects", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  name: varchar("name", { length: 100 }).notNull(),
-  code: varchar("code", { length: 20 }), // optional (e.g. COU105),
-  schoolId: uuid("school_id").notNull().references(() => schoolTable.id, { onDelete: "cascade" }),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
-  createdBy: uuid("created_by").references(() => usersTable.id, { onDelete: "set null" }),
-  updatedBy: uuid("updated_by").references(() => usersTable.id, { onDelete: "set null" }),
-
-}, t => ({
-        uniqueNamePerSchool: unique().on(t.name, t.schoolId), // unique name per school
-        schoolIndx: index("idx_subj_school").on(t.schoolId) 
-    })
-);
-
-
-// ─────────────────────────────────────────────────────────────────────────────────
-// 8. JOINT TABLE subject <-> classes <-> class (many-to-many relation)
-// ─────────────────────────────────────────────────────────────────────────────────
-export const subjectClassTable = pgTable("subject_class_levels", {
-  subjectId: uuid("subject_id").references(() => SubjectTable.id, { onDelete: "cascade" }).notNull(),
-  classId: uuid("class_id").references(() => ClassTable.id, { onDelete: "cascade" }).notNull(),
-  // no need of levelId since can be null and also if defined classId via class has levelId
-  // also will avoid subjects linked to wrong levels or classes
-}, 
-  (t) => ({
-    pk: primaryKey({ columns: [t.subjectId, t.classId], name: "pk_subject_class" }), // composite key
-  })
-);
-
 
 
 // ────────────────────────────────

@@ -4,13 +4,15 @@ export type baseSubjectReturn = {
 }
 
 export interface getSubjects extends baseSubjectReturn {
-    subjects: {
+    data: {
         id: string;
         name: string;
-        createdAt: Date;
-    }[]
-}
-
-export interface totalSubjects extends baseSubjectReturn {
-    total: number;
+        code: string | null;
+        schoolId: string;
+        createdAt: Date | null;
+        updatedAt: Date | null;
+        createdBy: string | null;
+        updatedBy: string | null;
+    }[],
+    total: number
 }

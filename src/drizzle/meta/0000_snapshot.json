@@ -1,5 +1,5 @@
 {
-  "id": "9f7c3fd9-79a2-4eec-bf6e-aecc76b92dee",
+  "id": "e323992d-69cd-4471-9890-111f11a0d24c",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -38,7 +38,7 @@
           "name": "level_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "updated_at": {
           "name": "updated_at",
@@ -91,17 +91,17 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "classes_level_id_levels_id_fk": {
-          "name": "classes_level_id_levels_id_fk",
+        "classes_level_id_levels_table_id_fk": {
+          "name": "classes_level_id_levels_table_id_fk",
           "tableFrom": "classes",
-          "tableTo": "levels",
+          "tableTo": "levels_table",
           "columnsFrom": [
             "level_id"
           ],
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "restrict",
           "onUpdate": "no action"
         },
         "classes_created_by_users_id_fk": {
@@ -271,6 +271,167 @@
           ]
         }
       },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.levels_table": {
+      "name": "levels_table",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "level": {
+          "name": "level",
+          "type": "level",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.subject_class_levels": {
+      "name": "subject_class_levels",
+      "schema": "",
+      "columns": {
+        "subject_id": {
+          "name": "subject_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "class_id": {
+          "name": "class_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "subject_class_levels_subject_id_subjects_id_fk": {
+          "name": "subject_class_levels_subject_id_subjects_id_fk",
+          "tableFrom": "subject_class_levels",
+          "tableTo": "subjects",
+          "columnsFrom": [
+            "subject_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "subject_class_levels_class_id_classes_id_fk": {
+          "name": "subject_class_levels_class_id_classes_id_fk",
+          "tableFrom": "subject_class_levels",
+          "tableTo": "classes",
+          "columnsFrom": [
+            "class_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "pk_subject_class": {
+          "name": "pk_subject_class",
+          "columns": [
+            "subject_id",
+            "class_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.subject_levels": {
+      "name": "subject_levels",
+      "schema": "",
+      "columns": {
+        "subject_id": {
+          "name": "subject_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "level_id": {
+          "name": "level_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "subject_levels_subject_id_subjects_id_fk": {
+          "name": "subject_levels_subject_id_subjects_id_fk",
+          "tableFrom": "subject_levels",
+          "tableTo": "subjects",
+          "columnsFrom": [
+            "subject_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "subject_levels_level_id_levels_table_id_fk": {
+          "name": "subject_levels_level_id_levels_table_id_fk",
+          "tableFrom": "subject_levels",
+          "tableTo": "levels_table",
+          "columnsFrom": [
+            "level_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "subject_levels_subject_id_level_id_pk": {
+          "name": "subject_levels_subject_id_level_id_pk",
+          "columns": [
+            "subject_id",
+            "level_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -2313,115 +2474,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.levels": {
-      "name": "levels",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "levels": {
-          "name": "levels",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "school_id": {
-          "name": "school_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_by": {
-          "name": "created_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "updated_by": {
-          "name": "updated_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "idx_level_school": {
-          "name": "idx_level_school",
-          "columns": [
-            {
-              "expression": "school_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "levels_school_id_school_id_fk": {
-          "name": "levels_school_id_school_id_fk",
-          "tableFrom": "levels",
-          "tableTo": "school",
-          "columnsFrom": [
-            "school_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "levels_created_by_users_id_fk": {
-          "name": "levels_created_by_users_id_fk",
-          "tableFrom": "levels",
-          "tableTo": "users",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "levels_updated_by_users_id_fk": {
-          "name": "levels_updated_by_users_id_fk",
-          "tableFrom": "levels",
-          "tableTo": "users",
-          "columnsFrom": [
-            "updated_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "levels_levels_school_id_unique": {
-          "name": "levels_levels_school_id_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "levels",
-            "school_id"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.parent_schools": {
       "name": "parent_schools",
       "schema": "",
@@ -2645,45 +2697,16 @@
           "primaryKey": false,
           "notNull": false
         },
-        "school_id": {
-          "name": "school_id",
-          "type": "uuid",
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false,
+          "default": "now()"
         }
       },
-      "indexes": {
-        "idx_roles_school": {
-          "name": "idx_roles_school",
-          "columns": [
-            {
-              "expression": "school_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "roles_school_id_school_id_fk": {
-          "name": "roles_school_id_school_id_fk",
-          "tableFrom": "roles",
-          "tableTo": "school",
-          "columnsFrom": [
-            "school_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
+      "indexes": {},
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -2758,6 +2781,13 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": false
+        },
+        "last_activity": {
+          "name": "last_activity",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
         },
         "created_at": {
           "name": "created_at",
@@ -3647,66 +3677,6 @@
       },
       "isRLSEnabled": false
     },
-    "public.subject_class_levels": {
-      "name": "subject_class_levels",
-      "schema": "",
-      "columns": {
-        "subject_id": {
-          "name": "subject_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "class_id": {
-          "name": "class_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "subject_class_levels_subject_id_subjects_id_fk": {
-          "name": "subject_class_levels_subject_id_subjects_id_fk",
-          "tableFrom": "subject_class_levels",
-          "tableTo": "subjects",
-          "columnsFrom": [
-            "subject_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "subject_class_levels_class_id_classes_id_fk": {
-          "name": "subject_class_levels_class_id_classes_id_fk",
-          "tableFrom": "subject_class_levels",
-          "tableTo": "classes",
-          "columnsFrom": [
-            "class_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "pk_subject_class": {
-          "name": "pk_subject_class",
-          "columns": [
-            "subject_id",
-            "class_id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.term": {
       "name": "term",
       "schema": "",
@@ -3946,19 +3916,25 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
+        "user_profiles_phone_unique": {
+          "name": "user_profiles_phone_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "phone"
+          ]
+        },
+        "user_profiles_email_unique": {
+          "name": "user_profiles_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        },
         "user_profiles_profile_id_unique": {
           "name": "user_profiles_profile_id_unique",
           "nullsNotDistinct": false,
           "columns": [
             "profile_id"
-          ]
-        },
-        "user_profiles_phone_email_unique": {
-          "name": "user_profiles_phone_email_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "phone",
-            "email"
           ]
         }
       },
@@ -3982,31 +3958,23 @@
           "primaryKey": false,
           "notNull": true
         },
+        "is_default": {
+          "name": "is_default",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
         "school_id": {
           "name": "school_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         }
       },
       "indexes": {
-        "idx_school_user_role_only": {
-          "name": "idx_school_user_role_only",
-          "columns": [
-            {
-              "expression": "school_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_school_user_role": {
-          "name": "idx_school_user_role",
+        "idx_user_role_user_school": {
+          "name": "idx_user_role_user_school",
           "columns": [
             {
               "expression": "user_id",
@@ -4068,115 +4036,18 @@
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {
-        "pk_user_roles": {
-          "name": "pk_user_roles",
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "uniq_user_role_scope": {
+          "name": "uniq_user_role_scope",
+          "nullsNotDistinct": false,
           "columns": [
+            "user_id",
             "role_id",
-            "user_id",
             "school_id"
           ]
         }
       },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.user_school": {
-      "name": "user_school",
-      "schema": "",
-      "columns": {
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "school_id": {
-          "name": "school_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "joined_at": {
-          "name": "joined_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "idx_user_schools_school": {
-          "name": "idx_user_schools_school",
-          "columns": [
-            {
-              "expression": "school_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_user_schools_user": {
-          "name": "idx_user_schools_user",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "user_school_user_id_users_id_fk": {
-          "name": "user_school_user_id_users_id_fk",
-          "tableFrom": "user_school",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "user_school_school_id_school_id_fk": {
-          "name": "user_school_school_id_school_id_fk",
-          "tableFrom": "user_school",
-          "tableTo": "school",
-          "columnsFrom": [
-            "school_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "user_school_user_id_school_id_pk": {
-          "name": "user_school_user_id_school_id_pk",
-          "columns": [
-            "user_id",
-            "school_id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

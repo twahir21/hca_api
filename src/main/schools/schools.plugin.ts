@@ -2,9 +2,26 @@ import Elysia from "elysia";
 import { schoolValidators } from "./schools.valid";
 import xss from "xss";
 import { schoolDatabase } from "./schools.db";
+import { verifyJWT } from "../../plugins/global.plugin";
 
 
 export const schoolsPlugin = new Elysia({ prefix: "/schools"})
+    .use(verifyJWT)
+    
+    // ===========================================
+    // === Super Admins only ===
+    // ===========================================
+    .guard({
+        beforeHandle({ selectedRole, set }) {
+            if(selectedRole !== "super-admin") {
+                set.status = "Forbidden";
+                return {
+                    success: false,
+                    message: "Only Super Admins can use this resource."
+                }
+            }
+        }
+    })
     .get("/get-schools", async ({ set, query }) => {
        return await schoolDatabase.getSchools({ set, query })
     //  await trackPerformance(schoolDatabase.getSchools, ({ set })).then(r => r)

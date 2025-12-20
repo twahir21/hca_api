@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { db } from "../../connections/drizzle.conn";
 import { sendOTPSMS } from "../../func/nextsms.func";
 import { generateOTP, getOTPData, isSessionExist, Return, verifyOTP } from "../../func/otp.func";
-import { schoolTable, userProfilesTable, userSchoolsTable } from "../../schema/core.schema";
+import { schoolTable, userProfilesTable, userRolesTable } from "../../schema/core.schema";
 import { Set } from "../../types/type";
 import { loginDatabase } from "./login.db";
 import { loginBody } from "./login.types";
@@ -112,9 +112,9 @@ export const loginController = {
 
             const [bulk] = await db.select({
                 name: schoolTable.bulkSMSName
-            }).from(userSchoolsTable)
-            .leftJoin(schoolTable, eq(schoolTable.id, userSchoolsTable.schoolId))
-            .where(eq(userSchoolsTable.userId, userId))
+            }).from(userRolesTable)
+            .leftJoin(schoolTable, eq(schoolTable.id, userRolesTable.schoolId))
+            .where(eq(userRolesTable.userId, userId))
             .then(m => m.map(a => a.name))
 
             const OTP = await generateOTP({ userId });
