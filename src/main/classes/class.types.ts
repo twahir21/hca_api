@@ -9,7 +9,7 @@ export interface getClasses extends baseClassReturn {
         name: string;
         schoolId: string;
         createdAt: Date | null;
-        levelId: string;
+        levelId: "primary" | "pre-primary" | "O-level" | "A-level" | "higher-education" | null;        
         updatedAt: Date | null;
         createdBy: string | null;
         updatedBy: string | null;

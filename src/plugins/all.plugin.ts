@@ -6,8 +6,8 @@ import prometheusPlugin from 'elysia-prometheus'
 import { LoginPlugin } from "../main/login/login.plugin";
 import { sendEmailPlugin } from "../email/send.email";
 import { main } from "./global.plugin";
-// import { ClassPlugin } from "../main/classes/class.plugin";
-// import { SubjectPlugin } from "../main/subject/subject.plugin";
+import { ClassPlugin } from "../main/classes/class.plugin";
+import { SubjectPlugin } from "../main/subject/subject.plugin";
 // import { TeachersPlugin } from "../main/teachers/teachers.plugin";
 // import { botPlugin } from "./bot/bot";
 // import { groqPlugin } from "./bot/qrok";
@@ -32,8 +32,8 @@ export const AllPlugins = new Elysia({ name: "All mini API "})
 	)
 	.use(LoginPlugin)
     .use(bulkSMSPlugin)
-	// .use(ClassPlugin)
-	// .use(SubjectPlugin)
+	.use(ClassPlugin)
+	.use(SubjectPlugin)
 	// .use(TeachersPlugin)
 	.use(main)
 	// .use(botPlugin)

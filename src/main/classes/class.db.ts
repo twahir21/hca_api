@@ -4,6 +4,7 @@ import { Set } from "../../types/type"
 import { baseClassReturn, getClasses } from "./class.types";
 import { ClassTable, levelsTables } from "../../schema/academic.schema";
 import { levelType } from "../../const/levels.const";
+import { userProfilesTable } from "../../schema/core.schema";
 
 
 
@@ -18,7 +19,7 @@ export const classDatabase = {
                                     .from(ClassTable)
                                     .where(eq(ClassTable.name, name));
 
-            if(isClassExist.id) {
+            if(isClassExist) {
                 set.status = "Conflict";
                 return {
                     success: false,
@@ -109,6 +110,8 @@ export const classDatabase = {
             const perPage = parseInt(limit) || 5;
             const offset = (page - 1) * perPage;
 
+            console.log("paginations: ", page, perPage, offset, search)
+
             // 1. define where clause for search
             const whereClause = search
                         ? or(
@@ -117,8 +120,19 @@ export const classDatabase = {
                         ): undefined; 
 
             const data = await db
-                                .select()
+                                .select({
+                                    id: ClassTable.id,
+                                    name: ClassTable.name,
+                                    schoolId: ClassTable.schoolId,
+                                    createdAt: ClassTable.createdAt,
+                                    updatedAt: ClassTable.updatedAt,
+                                    createdBy: userProfilesTable.fullName,
+                                    updatedBy: userProfilesTable.fullName,
+                                    levelId: levelsTables.levels
+                                })
                                 .from(ClassTable)
+                                .leftJoin(userProfilesTable, eq(userProfilesTable.userId, ClassTable.createdBy))
+                                .leftJoin(levelsTables, eq(levelsTables.id, ClassTable.levelId))
                                 .where(whereClause)
                                 .limit(perPage)
                                 .offset(offset)
