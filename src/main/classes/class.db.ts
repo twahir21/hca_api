@@ -110,8 +110,6 @@ export const classDatabase = {
             const perPage = parseInt(limit) || 5;
             const offset = (page - 1) * perPage;
 
-            console.log("paginations: ", page, perPage, offset, search)
-
             // 1. define where clause for search
             const whereClause = search
                         ? or(

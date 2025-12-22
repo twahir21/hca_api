@@ -3,6 +3,7 @@ import { db } from "../../connections/drizzle.conn";
 import { Set } from "../../types/type"
 import { baseSubjectReturn, getSubjects } from "./subject.types";
 import { SubjectTable } from "../../schema/academic.schema";
+import { userProfilesTable } from "../../schema/core.schema";
 
 
 
@@ -107,8 +108,18 @@ export const subjectDatabase = {
                         ): undefined; 
 
             const data = await db
-                                .select()
+                                .select({
+                                    id: SubjectTable.id,
+                                    name: SubjectTable.name,
+                                    code: SubjectTable.code,
+                                    schoolId: SubjectTable.schoolId,
+                                    createdAt: SubjectTable.createdAt,
+                                    updatedAt: SubjectTable.updatedAt,
+                                    createdBy: userProfilesTable.fullName,
+                                    updatedBy: userProfilesTable.fullName
+                                })
                                 .from(SubjectTable)
+                                .leftJoin(userProfilesTable, eq(userProfilesTable.userId, SubjectTable.createdBy))
                                 .where(whereClause)
                                 .limit(perPage)
                                 .offset(offset)
