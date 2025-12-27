@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { defineConfig } from 'drizzle-kit';
+import { dbLink } from './src/const/links.const';
 
 export default defineConfig({
   out: './src/drizzle', // Where migrations will be generated
@@ -7,7 +8,7 @@ export default defineConfig({
   dialect: 'postgresql',
   dbCredentials: {
     url:
-      process.env.POSTGRES_URL_LOCAL!,
+     dbLink,
   },
 });
 

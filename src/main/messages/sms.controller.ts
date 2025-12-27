@@ -1,16 +1,23 @@
+import { eq } from "drizzle-orm";
+import { db } from "../../connections/drizzle.conn";
 import { NextSMSHeaders } from "../../const/headers.const";
 import { processExcel } from "../../func/file.func";
 import { sendNextSMS } from "../../func/nextsms.func";
 import { Set } from "../../types/type";
 import { returnType, smsDatabase } from "./sms.db";
-import { createGroup, editGroup, isSmsSuccess, massiveContact, sendSMS, SmsResult } from "./sms.types";
+import { createGroup, editGroup, massiveContact, sendSMS } from "./sms.types";
+import { schoolTable } from "../../schema/core.schema";
 
 export const smsController = {
     sendViaExcel: async ({ file, set }: { file: File, set: Set }) => {
         return await processExcel({ file, set, requiredHeaders: ["Name", "Phone Number"] })
     },
-    sendSMS: async ({ body, set }: { body: sendSMS, set: Set }): Promise<{ success: boolean, message: string }> => {
-        try {                  
+    sendSMS: async ({ body, set, schoolId, userId }: { body: sendSMS, set: Set; schoolId: string; userId: string }): Promise<{ success: boolean, message: string }> => {
+        try {    
+            const [bulkName] = await db.select({ name: schoolTable.bulkSMSName })
+                .from(schoolTable) 
+                .where(eq(schoolTable.id, schoolId));
+
             switch(body.type) {
                 case "contact": 
                     // 1. Ensure in contact field either single phone or contact selection
@@ -46,7 +53,15 @@ export const smsController = {
                     }
 
                     // 5. send sms in contact field
-                    return await sendNextSMS({ phoneArray: phoneNumbers, message: body.message, set, body });
+                    return await sendNextSMS({ 
+                        phoneArray: phoneNumbers, 
+                        message: body.message, 
+                        set, 
+                        body,
+                        sender: bulkName.name ?? "",
+                        schoolId,
+                        userId
+                    });
 
                 case "group": 
 
@@ -64,7 +79,10 @@ export const smsController = {
                     phoneArray: body.selectedGrp.contacts.map(c => c.contactPhone), 
                     message: body.message, 
                     set, 
-                    body 
+                    body,
+                    sender: bulkName.name ?? "",
+                    schoolId,
+                    userId 
                 });
 
 
@@ -79,7 +97,15 @@ export const smsController = {
                 }
 
                 // 2. send sms in upload field
-                return await sendNextSMS({ phoneArray: body.file?.map(f => f.phone) ?? [], message: body.message, set, body });
+                return await sendNextSMS({ 
+                    phoneArray: body.file?.map(f => f.phone) ?? [], 
+                    message: body.message, 
+                    set, 
+                    body,
+                    sender: bulkName.name ?? "",
+                    schoolId,
+                    userId 
+                });
 
                 default: 
                 return {
@@ -100,9 +126,9 @@ export const smsController = {
 
         try {
             const response = await fetch("https://messaging-service.co.tz/api/sms/v1/balance", {
-            method: "GET",
-            headers: NextSMSHeaders,
-            redirect: "follow",
+                method: "GET",
+                headers: NextSMSHeaders,
+                redirect: "follow",
             });
 
             const result: {sms_balance: number} = await response.json();
@@ -113,26 +139,26 @@ export const smsController = {
             return 0;
         }
     },
-    massiveContactsUpload: async ({ body, set } : { body: massiveContact, set: Set }) => {
-        return await smsDatabase.createMassiveContacts({ body, set })
+    massiveContactsUpload: async ({ body, set, schoolId } : { schoolId: string; body: massiveContact, set: Set }) => {
+        return await smsDatabase.createMassiveContacts({ body, set, schoolId })
     },
     addingContact: async ( body: {
         name: string,
         phone: string
-    }, set : Set ): Promise<{
+    }, set : Set, schoolId: string ): Promise<{
         success: boolean,
         message: string
     }> => {
-        const result = await smsDatabase.createContact({ name: body.name, phone: body.phone }, set)
+        const result = await smsDatabase.createContact({ name: body.name, phone: body.phone, schoolId }, set)
         return {
             success: result.success,
             message: result.message
         }
     },
-    fetchContacts: async ({ currentPage, limit, set, search }: { 
-        currentPage: string; limit: string; set: Set, search: string
+    fetchContacts: async ({ currentPage, limit, set, search, schoolId }: { 
+        currentPage: string; limit: string; set: Set, search: string; schoolId: string;
     }): Promise<returnType> => {
-        return await smsDatabase.fetchContacts({ limit, currentPage, search, set });
+        return await smsDatabase.fetchContacts({ limit, currentPage, search, set, schoolId });
     },
     deleteContacts: async ({ set, body }: { set: Set, body: { id: string } }) => {
         return await smsDatabase.deleteContacts({ set, body });
@@ -140,11 +166,11 @@ export const smsController = {
     updateContact: async ({ body, set }: { body: { id: string; name: string; phone: string;}, set: Set }) => {
         return await smsDatabase.updateContact({ body, set });
     },
-    createGroup: async ({ body, set } : { body: createGroup, set: Set }) => {
-        return await smsDatabase.createGroup({ body, set });
+    createGroup: async ({ body, set, schoolId } : { schoolId: string; body: createGroup, set: Set }) => {
+        return await smsDatabase.createGroup({ body, set, schoolId });
     },
-    getGroups: async ({ currentPage, limit, search, set }: { currentPage: string; limit: string; search: string; set: Set }) => {
-        return await smsDatabase.getGroups({ currentPage, limit, search, set });
+    getGroups: async ({ currentPage, limit, search, set, schoolId }: { schoolId: string; currentPage: string; limit: string; search: string; set: Set }) => {
+        return await smsDatabase.getGroups({ currentPage, limit, search, set, schoolId });
     },
     deleteGroup: async ({ set, body }: { set: Set, body: { id: string } }) => {
         return await smsDatabase.deleteGroup({ set, body });
@@ -152,10 +178,10 @@ export const smsController = {
     editGroup: async ({ body, set }: { body: editGroup, set: Set }) => {
         return await smsDatabase.editGroup({ body, set });
     },
-    smsAnalytics: async ({ set }: { set: Set }) => {
-        return await smsDatabase.smsAnalytics({ set });
+    smsAnalytics: async ({ set, schoolId }: { set: Set; schoolId: string }) => {
+        return await smsDatabase.smsAnalytics({ set, schoolId });
     },
-    getRecentSMS: async ({ set, currentPage, limit, search }: { set: Set, currentPage: string, limit: string, search: string }) => {
-        return await smsDatabase.getRecentSMS({ set, currentPage, limit, search });
+    getRecentSMS: async ({ set, currentPage, limit, search, schoolId }: { schoolId: string; set: Set, currentPage: string, limit: string, search: string }) => {
+        return await smsDatabase.getRecentSMS({ set, currentPage, limit, search, schoolId });
     }
 }

@@ -1,10 +1,10 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "../../connections/drizzle.conn";
-import { ClassTable, SubjectTable, TeachersTable, TeacherSubjectClassTable } from "../../schema/class.schema";
 import { Set } from "../../types/type"
 import { baseTeacherReturn, TeacherBody } from "./teachers.types";
-import { usersTable } from "../../schema/users.schema";
 import { hash } from "../../security/pswd.sec";
+import { TeachersTable, TeacherSubjectClassTable, usersTable } from "../../schema/core.schema";
+import { ClassTable, SubjectTable } from "../../schema/academic.schema";
 
 export const TeachersDatabase = {
     createTeacher: async ({ body , set, userInfo }: { set: Set, body: TeacherBody; userInfo: { username: string; password: string} }): Promise<baseTeacherReturn> => {

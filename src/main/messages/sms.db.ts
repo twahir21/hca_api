@@ -19,7 +19,7 @@ export type returnType = {
 
 
 export const smsDatabase = {
-    createContact: async ({ name, phone }: { name: string; phone: string }, set: Set): Promise<returnType> => {
+    createContact: async ({ name, phone, schoolId }: { name: string; phone: string; schoolId: string }, set: Set): Promise<returnType> => {
         try {
             // 1. check if name or phone exixts
             const count = await db.select({
@@ -43,7 +43,8 @@ export const smsDatabase = {
             await db.insert(contactsTable).values({
                 // format name to Title Case
                 name: name.trim().toLowerCase().split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "), 
-                phone
+                phone,
+                schoolId
             });
             set.status = "OK";
             return {
@@ -60,7 +61,7 @@ export const smsDatabase = {
             }
         }
     },
-    fetchContacts: async ({ currentPage, limit, search, set }: { currentPage: string; limit: string; search: string; set: Set }): Promise<returnType> => {
+    fetchContacts: async ({ currentPage, limit, search, set, schoolId }: { schoolId: string; currentPage: string; limit: string; search: string; set: Set }): Promise<returnType> => {
         try {
             // 0. Define variables
             const page = parseInt(currentPage) || 1;
@@ -102,7 +103,12 @@ export const smsDatabase = {
                 name: contactsTable.name,
                 phone: contactsTable.phone,
             }).from(contactsTable)  
-            .where(whereClause)  // only applied if search provided
+            .where(
+                and(
+                    eq(contactsTable.schoolId, schoolId),
+                    whereClause
+                )
+            )
             .limit(perPage)
             .offset(offset)
             .orderBy(asc(contactsTable.name));
@@ -176,7 +182,7 @@ export const smsDatabase = {
             return [];
         }
     },
-    createMassiveContacts: async ({ body, set }: { body: massiveContact; set: Set }): Promise<returnType> => {
+    createMassiveContacts: async ({ body, set, schoolId }: { body: massiveContact; set: Set; schoolId: string }): Promise<returnType> => {
     try {
         for (const contact of body) {
         // 1. check if name or phone exists in DB
@@ -202,6 +208,7 @@ export const smsDatabase = {
         await db.insert(contactsTable).values({
             name: contact.name,
             phone: contact.phone,
+            schoolId
         });
         }
 
@@ -246,7 +253,7 @@ export const smsDatabase = {
             }
         }
     },
-    createGroup: async ({ body, set }: { body: createGroup; set: Set }): Promise<returnType> => {
+    createGroup: async ({ body, set, schoolId }: { body: createGroup; set: Set; schoolId: string }): Promise<returnType> => {
         try {
             // 0. check if group name exists
             const isExist = await db
@@ -263,7 +270,8 @@ export const smsDatabase = {
             }
             // 1. create group
             const group = await db.insert(groupsTable).values({
-                name: body.groupName
+                name: body.groupName,
+                schoolId
             }).returning().then(g => g[0].id);
 
             // 2. loop contacts selected and insert (bulk insert)
@@ -287,11 +295,12 @@ export const smsDatabase = {
             }
         }
     },
-    getGroups: async ({ currentPage, limit, search, set }: {
+    getGroups: async ({ currentPage, limit, search, set, schoolId }: {
         currentPage: string;
         limit: string;
         search: string;
         set: Set;
+        schoolId: string
     }): Promise<returnType> => {
     try {
         const page = parseInt(currentPage) || 1;
@@ -313,7 +322,12 @@ export const smsDatabase = {
             groupName: groupsTable.name,
         })
         .from(groupsTable)
-        .where(whereClause)
+        .where(
+            and(
+                eq(groupsTable.schoolId, schoolId),
+                whereClause
+            )
+        )
         .orderBy(asc(groupsTable.name))
         .limit(perPage)
         .offset(offset);
@@ -439,7 +453,7 @@ export const smsDatabase = {
             }
         }
     },
-    saveSMS: async ({ message, groupName, set }: { message: string; groupName: string; set: Set }) => {
+    saveSMS: async ({ message, groupName, set, schoolId }: { message: string; schoolId: string; groupName: string; set: Set }) => {
         try {
             // 0. Check if the message exists
             const isExist = await db.select({ id: recentMessagesTable.id })
@@ -456,7 +470,8 @@ export const smsDatabase = {
             // 1. save the message to the database 
             await db.insert(recentMessagesTable).values({
                 message,
-                groupName
+                groupName,
+                schoolId
             })
             set.status = "OK";
             return {
@@ -471,7 +486,7 @@ export const smsDatabase = {
             }
         }
     },
-    smsAnalytics: async ({ set }: { set: Set }): Promise<smsAnalytics> => {
+    smsAnalytics: async ({ set, schoolId }: { set: Set; schoolId: string; }): Promise<smsAnalytics> => {
         try {
             // 1. define today range of time
             const startOfDay = new Date();
@@ -487,7 +502,8 @@ export const smsDatabase = {
               .where(
                 and(
                 gte(sentSmsCountTable.createdAt, startOfDay),
-                lte(sentSmsCountTable.createdAt, endOfDay)
+                lte(sentSmsCountTable.createdAt, endOfDay),
+                eq(sentSmsCountTable.schoolId, schoolId)
                 )
             )
             .then((r) => Number(r[0].count));
@@ -496,12 +512,14 @@ export const smsDatabase = {
             const totalGroups = await db
                 .select({ count: count(groupsTable.id) })
                 .from(groupsTable)
+                .where(eq(groupsTable.schoolId, schoolId))
                 .then((r) => Number(r[0].count));
             
             // 4. get total contacts
             const totalContacts = await db
                 .select({ count: count(contactsTable.id) })
                 .from(contactsTable)
+                .where(eq(contactsTable.schoolId, schoolId))
                 .then((r) => Number(r[0].count));
 
             set.status = "OK";
@@ -521,7 +539,7 @@ export const smsDatabase = {
             }
         }
     },
-    getRecentSMS: async ({ set, currentPage, limit, search }: { set: Set; currentPage: string; limit: string; search: string }): Promise<recentSMS> => {
+    getRecentSMS: async ({ set, currentPage, limit, search, schoolId }: {schoolId: string; set: Set; currentPage: string; limit: string; search: string }): Promise<recentSMS> => {
         try {
                 const page = parseInt(currentPage) || 1;
                 const perPage = parseInt(limit) || 5;
@@ -538,7 +556,12 @@ export const smsDatabase = {
             const recentSMS = await db
                     .select()
                     .from(recentMessagesTable)
-                    .where(whereClause)
+                    .where(
+                        and(
+                            eq(recentMessagesTable.schoolId, schoolId),
+                            whereClause
+                        )
+                    )
                     .orderBy(desc(recentMessagesTable.createdAt))
                     .limit(perPage)
                     .offset(offset)
@@ -557,6 +580,7 @@ export const smsDatabase = {
             const totalSMS = await db
                 .select({ count: count(recentMessagesTable.id) })
                 .from(recentMessagesTable)
+                .where(eq(recentMessagesTable.schoolId, schoolId))
                 .then((r) => Number(r[0].count));
                     
             set.status = "OK";

@@ -7,21 +7,12 @@ import { verifyJWT } from "../../plugins/global.plugin";
 export const bulkSMSPlugin = new Elysia({ name: "Bulk sms API", prefix: "/sms" })
     .use(verifyJWT)
     .guard({
-        beforeHandle({ role, userId, set }) {
-            if (!userId) {
-                set.status = "Unauthorized";
+        beforeHandle({ selectedRole, set }) {
+            if(selectedRole !== "school-admin" && selectedRole !== "teacher") {
+                set.status = "Forbidden";
                 return {
                     success: false,
-                    message: "No or invalid token"
-                }
-            }
-
-            // role checking ...
-            if (role !== 'admin' && role !== 'teacher'){
-                set.status = "Non-Authoritative Information";
-                return {
-                    success: false,
-                    message: "This resource is allowed to Techers and Admins only"
+                    message: "Only School Admins and Teachers can use this resource."
                 }
             }
         }
@@ -29,14 +20,20 @@ export const bulkSMSPlugin = new Elysia({ name: "Bulk sms API", prefix: "/sms" }
     .get("get-total-sms", async ({ set }) => {
         return await smsController.get({ set });
     })
-    .get("/get-recent-sms", async ({ set, query }) => {
-        return await smsController.getRecentSMS({ set, currentPage: query.page ?? "1", limit: query.limit ?? "5", search: query.search ?? "" });
+    .get("/get-recent-sms", async ({ set, query, schoolId }) => {
+        if (!schoolId) return { success: false, message: "JWT key information failed to be decoded"};
+
+        return await smsController.getRecentSMS({ set, currentPage: query.page ?? "1", limit: query.limit ?? "5", search: query.search ?? "", schoolId });
     })
-    .get("/sms-analytics", async ({ set }) => {
-        return await smsController.smsAnalytics({ set });
+    .get("/sms-analytics", async ({ set, schoolId }) => {
+        if (!schoolId) return { success: false, message: "JWT key information failed to be decoded"};
+
+        return await smsController.smsAnalytics({ set, schoolId });
     })
-    .post("/sendSMS", async ({ body, set }) => {
-        return await smsController.sendSMS({ body, set });
+    .post("/sendSMS", async ({ body, set, schoolId, userId }) => {
+        if (!schoolId || userId) return { success: false, message: "JWT key information failed to be decoded"}
+
+        return await smsController.sendSMS({ body, set, schoolId, userId });
     }, {
         // validate
         body: smsValidation.sendSMS,
@@ -45,8 +42,9 @@ export const bulkSMSPlugin = new Elysia({ name: "Bulk sms API", prefix: "/sms" }
             body.message = xss(body.message).trim();
         }
     })
-    .get("/get-groups", async ({ set, query }) => {
-        return await smsController.getGroups({ set, currentPage: query.page ?? "1", limit: query.limit ?? "5", search: query.search ?? "" });
+    .get("/get-groups", async ({ set, query, schoolId }) => {
+        if (!schoolId) return { success: false, message: "JWT key information failed to be decoded"}
+        return await smsController.getGroups({ schoolId, set, currentPage: query.page ?? "1", limit: query.limit ?? "5", search: query.search ?? "" });
     }, {
         beforeHandle({ query }) {
             query.search = xss(query.search).toLowerCase().trim();
@@ -54,19 +52,9 @@ export const bulkSMSPlugin = new Elysia({ name: "Bulk sms API", prefix: "/sms" }
             query.limit = xss(query.limit).trim();
         }
     })
-    .get("/get-contacts", async ({ query, set }) => {
-        // simulate delay
-        // await new Promise((resolve) => setTimeout(resolve, 3000));
-        // metrics for performance of the route
-    //    return trackPerformance(
-    //         async () => await smsController.fetchContacts({ currentPage: query.page, limit: query.limit, search: query.search,set }), { 
-    //             route: "/contacts/get",
-    //             method: "GET",
-    //             statusCode: set.status,
-    //             timestamp: Date.now()
-    //         }
-    //     );
-        return await smsController.fetchContacts({ currentPage: query.page ?? "1", limit: query.limit ?? "5", search: query.search ?? "", set });
+    .get("/get-contacts", async ({ query, set, schoolId }) => {
+        if (!schoolId) return { success: false, message: "JWT key information failed to be decoded"}
+        return await smsController.fetchContacts({ schoolId, currentPage: query.page ?? "1", limit: query.limit ?? "5", search: query.search ?? "", set });
     }, {
         beforeHandle({ query }) {
             query.search = xss(query.search).toLowerCase().trim();
@@ -92,8 +80,10 @@ export const bulkSMSPlugin = new Elysia({ name: "Bulk sms API", prefix: "/sms" }
         }
 
     })
-    .post("/add-contact", async ({ body, set }) => {
-        return await smsController.addingContact(body, set);
+    .post("/add-contact", async ({ body, set, schoolId }) => {
+        if (!schoolId) return { success: false, message: "JWT key information failed to be decoded"}
+
+        return await smsController.addingContact(body, set, schoolId);
     }, {
         // validate
         body: smsValidation.contactPost,
@@ -110,8 +100,10 @@ export const bulkSMSPlugin = new Elysia({ name: "Bulk sms API", prefix: "/sms" }
             }
         }
     })
-    .post("/create-group", async ({ body, set }) => {
-        return await smsController.createGroup({ body, set });
+    .post("/create-group", async ({ body, set, schoolId }) => {
+        if (!schoolId) return { success: false, message: "JWT key information failed to be decoded"}
+
+        return await smsController.createGroup({ body, set, schoolId });
     }, {
         body: smsValidation.createGroup,
         // sanitize
@@ -141,12 +133,12 @@ export const bulkSMSPlugin = new Elysia({ name: "Bulk sms API", prefix: "/sms" }
     // === Admin Only ===
     // ==============================
     .guard({
-        beforeHandle({ role, set }) {
-            if (role !== 'admin') {
-                set.status = "Non-Authoritative Information";
+        beforeHandle({ selectedRole, set }) {
+            if(selectedRole !== "school-admin") {
+                set.status = "Forbidden";
                 return {
                     success: false,
-                    message: "This resource is only for Admins."
+                    message: "Only School Admins can use this resource."
                 }
             }
         }
@@ -156,8 +148,9 @@ export const bulkSMSPlugin = new Elysia({ name: "Bulk sms API", prefix: "/sms" }
     }, {
         body: smsValidation.deleteContact
     })
-    .post("/massive-contacts-upload", async ({ body, set }) => { 
-        return await smsController.massiveContactsUpload({ body, set });
+    .post("/massive-contacts-upload", async ({ body, set, schoolId }) => { 
+        if (!schoolId) return { success: false, message: "JWT key information failed to be decoded"}
+        return await smsController.massiveContactsUpload({ body, set, schoolId });
     }, {
         body: smsValidation.massiveContact,
         // sanitize

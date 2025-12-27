@@ -49,8 +49,9 @@ export const ClassPlugin = new Elysia ({ prefix: "/classes"})
         body: classValidators.deleteClass
     })
 
-    .get("/get-classes", async ({ set, query }) => {
-        return await classDatabase.getClasses({ set, currentPage: query.page ?? "1", limit: query.limit ?? "5", search: query.search ?? "" });
+    .get("/get-classes", async ({ set, query, schoolId }) => {
+        if (!schoolId) return { success: false, message: "JWT key information failed to be decoded"}
+        return await classDatabase.getClasses({ set, currentPage: query.page ?? "1", limit: query.limit ?? "5", search: query.search ?? "", schoolId });
     }, {
          beforeHandle({ query }) {
             query.search = xss(query.search).toLowerCase().trim().split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");

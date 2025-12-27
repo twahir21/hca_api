@@ -1,4 +1,4 @@
-import { asc, count, eq, like, or } from "drizzle-orm";
+import { and, asc, count, eq, like, or } from "drizzle-orm";
 import { db } from "../../connections/drizzle.conn";
 import { Set } from "../../types/type"
 import { baseClassReturn, getClasses } from "./class.types";
@@ -103,7 +103,7 @@ export const classDatabase = {
             }
         }
     },
-    getClasses: async ({ set, limit, currentPage, search } : { set : Set; limit: string; currentPage: string; search: string }): Promise<getClasses&{total: number}> => {
+    getClasses: async ({ set, limit, currentPage, search, schoolId } : { schoolId: string; set : Set; limit: string; currentPage: string; search: string }): Promise<getClasses&{total: number}> => {
         try {
             // 0. Define variables
             const page = parseInt(currentPage) || 1;
@@ -131,13 +131,19 @@ export const classDatabase = {
                                 .from(ClassTable)
                                 .leftJoin(userProfilesTable, eq(userProfilesTable.userId, ClassTable.createdBy))
                                 .leftJoin(levelsTables, eq(levelsTables.id, ClassTable.levelId))
-                                .where(whereClause)
+                                .where(
+                                    and(
+                                        eq(ClassTable.schoolId, schoolId),
+                                        whereClause
+                                    )
+                                )
                                 .limit(perPage)
                                 .offset(offset)
                                 .orderBy(asc(ClassTable.name));
 
             const [totalClasses] = await db.select({ count: count(ClassTable) })
-                .from(ClassTable);
+                .from(ClassTable)
+                .where(eq(ClassTable.schoolId, schoolId))
                                 
             if (data.length === 0) {
                 set.status = "Not Found";

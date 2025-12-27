@@ -34,21 +34,7 @@ export const staffDatabase = {
                         )
                     )
 
-        const userProfile = await db.select(
-        //     {
-        //     id: userProfilesTable.id,
-        //     fullName: userProfilesTable.fullName,
-        //     phone: userProfilesTable.phone,
-        //     email: userProfilesTable.email,
-        //     address: userProfilesTable.address,
-        //     gender: userProfilesTable.gender,
-        //     dob: userProfilesTable.dob,
-        //     userId: userProfilesTable.userId,
-        //     createdAt: userProfilesTable.createdAt,
-        //     updatedAt: userProfilesTable.updatedAt,
-        //     role: rolesTable.role
-        // }
-    )
+        const userProfile = await db.select()
             .from(userProfilesTable)
             .leftJoin(userRolesTable, eq(userRolesTable.userId, userProfilesTable.userId))
             .leftJoin(rolesTable, eq(rolesTable.id, userRolesTable.roleId))
@@ -63,8 +49,6 @@ export const staffDatabase = {
             .limit(perPage)
             .offset(offset)
             .then(u => u.map(p => p.user_profiles))
-
-            console.log("userprofile: ", userProfile)
 
             const userIds = userProfile.map(p => p.userId);
                 
