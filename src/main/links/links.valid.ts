@@ -85,5 +85,26 @@ export const linkValidations = {
                 }
             }
         })
-    })
+    }),
+    createInnerUser: t.Object({
+        email: t.String({
+            format: "email",
+            error(): validErr {
+                return {
+                    success: false,
+                    message: "Email is empty or not valid"
+                }
+            }
+        }),
+        phone: t.String({
+            minLength: 12,
+            maxLength: 12,
+            error(): validErr {
+                return {
+                    success: false,
+                    message: "Phone is empty or with invalid TZ code"
+                }
+            }
+        })
+    }),
 }

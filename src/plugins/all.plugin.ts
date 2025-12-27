@@ -8,6 +8,7 @@ import { sendEmailPlugin } from "../email/send.email";
 import { main } from "./global.plugin";
 import { ClassPlugin } from "../main/classes/class.plugin";
 import { SubjectPlugin } from "../main/subject/subject.plugin";
+import { staffPlugin } from "../main/staff/staff.plugin";
 // import { TeachersPlugin } from "../main/teachers/teachers.plugin";
 // import { botPlugin } from "./bot/bot";
 // import { groqPlugin } from "./bot/qrok";
@@ -41,3 +42,4 @@ export const AllPlugins = new Elysia({ name: "All mini API "})
 	.use(schoolsPlugin)
 	.use(linksPlugin)
 	.use(sendEmailPlugin)
+	.use(staffPlugin)

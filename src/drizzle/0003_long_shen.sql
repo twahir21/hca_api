@@ -1,0 +1,1 @@
+ALTER TABLE "user_profiles" ALTER COLUMN "gender" DROP NOT NULL;

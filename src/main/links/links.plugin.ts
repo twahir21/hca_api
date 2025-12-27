@@ -88,7 +88,7 @@ export const linksPlugin = new Elysia({ prefix: "/links"})
             set.status = "Bad Request";
             return {
                 success: false,
-                message: "No school found"
+                message: "Bad request"
             }
         }
 
@@ -171,12 +171,22 @@ export const linksPlugin = new Elysia({ prefix: "/links"})
             }
         }
     })
-    .post("/:role", async ({ params, set, body, token, isRateLimited  }) => {
+    .post("/:role", async ({ params, set, body, token, isRateLimited, schoolId  }) => {
         if(!isRateLimited){
             set.status = "Too Many Requests";
             return {
                 success: false,
                 message: "Too many requests, try after an hour"
+            }
+        }
+        // check if user exists
+        const isValid = await linkDatabases.validateUser(body)
+
+        if(!isValid){
+            set.status = "Bad Request";
+            return {
+                success: false,
+                message: "You can't assign default role to existing user, consider updating it"
             }
         }
         // validate the role 
@@ -189,18 +199,16 @@ export const linksPlugin = new Elysia({ prefix: "/links"})
                 message: "The Role requested is invalid"
             }
         }
-        // get phone and email from schoolId
-        const [contactInfo] = await db.select({
-            phone: schoolTable.phone,
-            email: schoolTable.email
-        }).from(schoolTable).where(eq(schoolTable.id, body.schoolId));
+
+        if (!schoolId) return { success: false, message: "JWT key information failed to be decoded"}
+
 
         const [tokenInfoId] = await db.insert(tokenInfoTable)
             .values({
-               role: "school-admin",
-               email: contactInfo.email,
-               phone: contactInfo.phone,
-               schoolId: body.schoolId 
+               role: params.role as Roles,
+               email: body.email,
+               phone: body.phone,
+               schoolId
             }).returning({
                 id: tokenInfoTable.id
             });
@@ -216,7 +224,7 @@ export const linksPlugin = new Elysia({ prefix: "/links"})
         const [sender] = await db.select({
             bulkSMSName: schoolTable.bulkSMSName 
         }).from(schoolTable)
-        .where(eq(schoolTable.id, body.schoolId))
+        .where(eq(schoolTable.id, schoolId))
 
         if (!sender.bulkSMSName){
             set.status = "Bad Request";
@@ -226,18 +234,47 @@ export const linksPlugin = new Elysia({ prefix: "/links"})
             }
         }
 
-        return await sendOTPSMS({
-            phoneArray: [contactInfo.phone],
+        // better to use the queue like bullmq in VPS
+        const isSent = await sendOTPSMS({
+            phoneArray: [body.phone],
             sender: sender.bulkSMSName,
             message:  `You’ve been added to HCA portal. Click below to activate your account and set your password.
 👇 Activate Account with link below within 1 hour.
-            ${links.clientLink}/activate/?token=${userToken}`,
+            ${links.clientLink}/initiate-account/?token=${userToken}`,
             set
         });
+
+        // provide a fallback option to send via email
+        if (!isSent.success){
+            const sendMail = await sendEmail({
+                fromName: "SkuliPro",
+                subject: "initiate-account",
+                message: `You’ve been added to HCA portal. Click below to activate your account and set your password.                
+                👇 Activate Account with link below within 1 hour.
+            ${links.clientLink}/initiate-account/?token=${userToken}`,
+                title: "Activate Account",
+                user: [body.email]
+            })
+
+            return {
+                success: sendMail.success,
+                message: sendMail.success ? "The activation link has been sent via email. SMS delivery is currently unavailable." : sendMail.message
+            }
+        }
+        return isSent;
     }, {
-        body: linkValidations.createUser,
+        body: linkValidations.createInnerUser,
         beforeHandle({ body, set, selectedRole }){
-            body.schoolId = xss(body.schoolId).trim();
+            body.email = xss(body.email).trim();
+            body.phone = xss(body.phone).trim();
+
+            if (!body.phone.startsWith("255")){
+                set.status = "Bad Request";
+                return {
+                    success: false,
+                    message: "Phone with TZ code are only supported"
+                }
+            }
 
             if(selectedRole !== "school-admin") {
                 set.status= "Forbidden";

@@ -48,7 +48,7 @@ export const subscription = pgEnum("subscription_plan", [
     'Enterprice' // advanced features like online classes & quizes, AI tutor, smart attendance (e.g. face recognition, fingerprint), and GPS for schoolBus
 ])
 
-export const genderEnums = pgEnum("gender", ["male", "female"]);
+export const genderEnums = pgEnum("gender", ["male", "female", "prefer not say"]);
 export const periodEnums = pgEnum("period", ["pre-morning", "morning", "afternoon", "evening", "night"])
 export const attendanceStatus = pgEnum("status", ["present", "absent", "permitted"]);
 export const userStatusEnum = pgEnum("user_status", ["active", "inactive", "suspended", "pending"]);
@@ -123,7 +123,7 @@ export const userProfilesTable = pgTable("user_profiles", {
   phone: text("phone").notNull().unique(),
   email: text("email").notNull().unique(),
   address: text("address"),
-  gender: genderEnums("gender"),
+  gender: genderEnums("gender").notNull().default("prefer not say"),
   dob: timestamp("dob"),
   userId: uuid("profile_id").notNull().unique().references(() => usersTable.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").defaultNow(),

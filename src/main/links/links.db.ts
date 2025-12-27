@@ -126,11 +126,33 @@ export const linkDatabases = {
                 id: schoolTable.id
             })
             .from(schoolTable)
-            .where(eq(schoolTable.id, body.schoolId))
+            .where(
+                and(
+                    eq(schoolTable.id, body.schoolId),
+                    eq(schoolTable.status, "pending")
+                )
+            )
 
             if (!schooldata) {
                 return false
             }
+            return true;
+        } catch (error) {
+            return false;
+        }
+    },
+    validateUser: async (body: { email: string; phone: string; }): Promise<boolean> => {
+        try {
+            const [row] = await db
+                .select({ id: userProfilesTable.id })
+                .from(userProfilesTable)
+                .where(
+                    or(
+                        eq(userProfilesTable.email, body.email),
+                        eq(userProfilesTable.phone, body.phone)
+                    )
+                )
+            if(row) return false;
             return true;
         } catch (error) {
             return false;

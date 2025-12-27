@@ -15,6 +15,27 @@
       "when": 1766264776932,
       "tag": "0001_smart_talkback",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1766647556440,
+      "tag": "0002_purple_photon",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1766647592488,
+      "tag": "0003_long_shen",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1766647652838,
+      "tag": "0004_zippy_gertrude_yorkes",
+      "breakpoints": true
     }
   ]
 }
