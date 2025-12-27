@@ -60,6 +60,7 @@ export const sendNextSMS = async ({ phoneArray, message, set, body, sender, scho
                     message: body.message,
                     set,
                     groupName: body.selectedGrp ? body.selectedGrp.groupName : "Individual",
+                    schoolId
                 });
 
             return {
