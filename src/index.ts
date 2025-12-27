@@ -32,3 +32,5 @@ const app = new Elysia()
 console.log(` 
   SERVER: 🚀 BlackStack Server initialized: 🦊 Elysia is running ... at http://${app.server?.hostname}:${app.server?.port}
 `);
+// for Vercel
+export default app;
