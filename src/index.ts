@@ -15,7 +15,13 @@ const app = new Elysia()
     }
   })
   .use(openapi()) 
-  .get("/health", () => "Hello, from blackStack Elysia API")
+  .get("/", () => {
+    return new Response(Homehtml, {
+      headers: {
+        'Content-Type': 'text/html'
+      }
+    })
+  })
   .use(cors(
     {
       origin: ["http://localhost:5173", "https://accounts.highercareer.academy"]
