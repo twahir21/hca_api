@@ -2,6 +2,7 @@ import { Elysia } from "elysia";
 import { AllPlugins } from "./plugins/all.plugin";
 import cors from "@elysiajs/cors";
 import openapi from "@elysiajs/openapi";
+import { Port } from "./const/links.const";
 
 const app = new Elysia()
   .onError(({ code, set }) => {
@@ -26,7 +27,7 @@ const app = new Elysia()
   // })
   .use(AllPlugins)
 
-  .listen(8080);
+  .listen(Port);
 
 console.log(` 
   SERVER: 🚀 BlackStack Server initialized: 🦊 Elysia is running ... at http://${app.server?.hostname}:${app.server?.port}
