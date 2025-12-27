@@ -3,6 +3,7 @@ import { AllPlugins } from "./plugins/all.plugin";
 import cors from "@elysiajs/cors";
 import openapi from "@elysiajs/openapi";
 import { Port } from "./const/links.const";
+import { Homehtml } from "./const/html.const";
 
 const app = new Elysia()
   .onError(({ code, set }) => {

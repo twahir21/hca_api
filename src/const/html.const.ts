@@ -1,4 +1,4 @@
-const Homehtml = `
+export const Homehtml = `
 
     <!DOCTYPE html>
     <html lang="en">
